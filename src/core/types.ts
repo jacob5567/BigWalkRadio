@@ -32,8 +32,8 @@ export interface Station {
   name: string;
   /** Normalised album name, used to match imported files back to this station. */
   albumKey?: string;
-  /** Dial position in MHz. */
-  frequency: number;
+  /** Slot on the dial, numbered from 1. */
+  channel: number;
   /** At least one. Kept sorted by startHour by `normalizeStation`. */
   programs: Program[];
 }
@@ -50,7 +50,7 @@ export interface Settings {
    * plays at 1x and only the daypart schedule accelerates.
    */
   compressTrackTimeline: boolean;
-  frequency: number;
+  channel: number;
   volume: number;
   powered: boolean;
   /** Real seconds of overlap when one daypart hands over to the next. */
@@ -60,7 +60,7 @@ export interface Settings {
 export interface DialConfig {
   min: number;
   max: number;
-  /** MHz offset at which a station's raw signal is at half strength. */
+  /** Distance in channels at which a station's signal is at half strength. */
   halfWidth: number;
   /** Higher = the strongest station suppresses its neighbours harder. */
   capture: number;

@@ -20,7 +20,7 @@ const tracks = new Map<string, Track>([
 const lobby: Station = normalizeStation({
   id: 'lobby',
   name: 'Lobby',
-  frequency: 100.9,
+  channel: 5,
   programs: [
     { id: 'motif', name: 'Motif', startHour: 0, trackIds: ['motif'] },
     { id: 'leitmotif', name: 'Leitmotif', startHour: 7.2, trackIds: ['leitmotif'] },
@@ -88,7 +88,7 @@ describe('resolveStationLayers', () => {
 
   it('caps the blend so a short daypart is not mostly crossfade', () => {
     const brief: Station = normalizeStation({
-      id: 'b', name: 'B', frequency: 90,
+      id: 'b', name: 'B', channel: 2,
       programs: [
         { id: 'one', name: 'One', startHour: 0, trackIds: ['motif'] },
         // A 20-second daypart: the blend must not exceed a quarter of it.
@@ -104,7 +104,7 @@ describe('resolveStationLayers', () => {
 
   it('keeps the outgoing daypart audible when the incoming one is empty', () => {
     const patchy: Station = normalizeStation({
-      id: 'p', name: 'P', frequency: 90,
+      id: 'p', name: 'P', channel: 2,
       programs: [
         { id: 'one', name: 'One', startHour: 0, trackIds: ['motif'] },
         { id: 'empty', name: 'Empty', startHour: 7, trackIds: [] },
@@ -118,7 +118,7 @@ describe('resolveStationLayers', () => {
 
   it('has nothing to blend on a single-daypart station', () => {
     const solo: Station = {
-      id: 's', name: 'S', frequency: 90,
+      id: 's', name: 'S', channel: 2,
       programs: [{ id: 'all', name: 'All', startHour: 0, trackIds: ['motif'] }],
     };
     const layers = resolveStationLayers(solo, clock.read(at('2026-03-04T00:00:02Z')), tracks);

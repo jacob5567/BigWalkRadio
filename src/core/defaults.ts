@@ -6,14 +6,14 @@ export const DEFAULT_SETTINGS: Settings = {
   mode: 'real',
   gameDayMinutes: 24,
   compressTrackTimeline: false,
-  frequency: 100.9,
+  channel: 1,
   volume: 0.8,
   powered: false,
   blendSeconds: DEFAULT_BLEND_SECONDS,
 };
 
 /**
- * The eighth slot on the dial. The soundtrack release only ships seven
+ * The last slot on the dial. The soundtrack release only ships seven
  * time-stamped albums, so this one starts empty for the listener to fill.
  */
 export const CUSTOM_STATION_ID = 'st-custom';
@@ -29,9 +29,9 @@ export function makeDefaultStations(): Station[] {
   }));
   presets.push({
     id: CUSTOM_STATION_ID,
-    name: 'Open Frequency',
-    frequency: 88.1,
+    name: 'Open Channel',
+    channel: presets.length + 1,
     programs: [{ id: `${CUSTOM_STATION_ID}-p1`, name: 'Continuous', startHour: 0, trackIds: [] }],
   });
-  return presets.sort((a, b) => a.frequency - b.frequency);
+  return presets.sort((a, b) => a.channel - b.channel);
 }

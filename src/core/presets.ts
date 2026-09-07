@@ -8,7 +8,6 @@ export const STATION_PRESETS: Station[] = [
     "id": "st-blueprint",
     "name": "Blueprint",
     "albumKey": "blueprint",
-    "frequency": 90.5,
     "programs": [
       {
         "id": "st-blueprint-p1",
@@ -34,13 +33,13 @@ export const STATION_PRESETS: Station[] = [
         "startHour": 22.85,
         "trackIds": []
       }
-    ]
+    ],
+    "channel": 1
   },
   {
     "id": "st-breathwork",
     "name": "Breathwork",
     "albumKey": "breathwork",
-    "frequency": 92.7,
     "programs": [
       {
         "id": "st-breathwork-p1",
@@ -60,13 +59,13 @@ export const STATION_PRESETS: Station[] = [
         "startHour": 22.25,
         "trackIds": []
       }
-    ]
+    ],
+    "channel": 2
   },
   {
     "id": "st-fourthspace",
     "name": "Fourth Space",
     "albumKey": "fourthspace",
-    "frequency": 95.3,
     "programs": [
       {
         "id": "st-fourthspace-p1",
@@ -80,13 +79,13 @@ export const STATION_PRESETS: Station[] = [
         "startHour": 17.683333,
         "trackIds": []
       }
-    ]
+    ],
+    "channel": 3
   },
   {
     "id": "st-journeybeat",
     "name": "Journey Beat",
     "albumKey": "journeybeat",
-    "frequency": 98.1,
     "programs": [
       {
         "id": "st-journeybeat-p1",
@@ -112,13 +111,13 @@ export const STATION_PRESETS: Station[] = [
         "startHour": 19.55,
         "trackIds": []
       }
-    ]
+    ],
+    "channel": 4
   },
   {
     "id": "st-lobby",
     "name": "Lobby",
     "albumKey": "lobby",
-    "frequency": 100.9,
     "programs": [
       {
         "id": "st-lobby-p1",
@@ -138,13 +137,13 @@ export const STATION_PRESETS: Station[] = [
         "startHour": 14.683333,
         "trackIds": []
       }
-    ]
+    ],
+    "channel": 5
   },
   {
     "id": "st-mallets",
     "name": "Mallets",
     "albumKey": "mallets",
-    "frequency": 103.5,
     "programs": [
       {
         "id": "st-mallets-p1",
@@ -164,13 +163,13 @@ export const STATION_PRESETS: Station[] = [
         "startHour": 20.15,
         "trackIds": []
       }
-    ]
+    ],
+    "channel": 6
   },
   {
     "id": "st-underground",
     "name": "Underground",
     "albumKey": "underground",
-    "frequency": 106.7,
     "programs": [
       {
         "id": "st-underground-p1",
@@ -202,7 +201,8 @@ export const STATION_PRESETS: Station[] = [
         "startHour": 20.966667,
         "trackIds": []
       }
-    ]
+    ],
+    "channel": 7
   }
 ];
 

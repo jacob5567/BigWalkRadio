@@ -19,7 +19,7 @@ const tracks = new Map<string, Track>([
 const dayparted: Station = normalizeStation({
   id: 'st',
   name: 'Test',
-  frequency: 92.3,
+  channel: 3,
   programs: [
     { id: 'night', name: 'Night', startHour: 22, trackIds: ['c'] },
     { id: 'morning', name: 'Morning', startHour: 6, trackIds: ['a', 'b'] },
@@ -30,7 +30,7 @@ const dayparted: Station = normalizeStation({
 const continuous: Station = {
   id: 'cont',
   name: 'Continuous',
-  frequency: 88.5,
+  channel: 1,
   programs: [{ id: 'all', name: 'All Day', startHour: 0, trackIds: ['a', 'b'] }],
 };
 
@@ -65,7 +65,7 @@ describe('resolveProgram', () => {
   });
 
   it('returns null when a station has no programs', () => {
-    const empty: Station = { id: 'x', name: 'x', frequency: 90, programs: [] };
+    const empty: Station = { id: 'x', name: 'x', channel: 2, programs: [] };
     expect(resolveProgram(empty, clock.read(at('2026-03-04T13:00:00Z')))).toBeNull();
   });
 });
@@ -102,7 +102,7 @@ describe('resolvePlayback in real time', () => {
 
   it('skips missing and zero-length tracks', () => {
     const patchy: Station = {
-      id: 'p', name: 'P', frequency: 90,
+      id: 'p', name: 'P', channel: 2,
       programs: [{ id: 'x', name: 'X', startHour: 0, trackIds: ['missing', 'zero', 'c'] }],
     };
     const p = resolvePlayback(patchy, clock.read(at('2026-03-04T00:00:10Z')), tracks);
@@ -112,7 +112,7 @@ describe('resolvePlayback in real time', () => {
 
   it('is dead air when nothing playable is scheduled', () => {
     const silent: Station = {
-      id: 's', name: 'S', frequency: 90,
+      id: 's', name: 'S', channel: 2,
       programs: [{ id: 'x', name: 'X', startHour: 0, trackIds: [] }],
     };
     expect(resolvePlayback(silent, clock.read(at('2026-03-04T00:00:10Z')), tracks)).toBeNull();

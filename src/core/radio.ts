@@ -121,21 +121,21 @@ export class Radio {
 
   setFrequency(freq: number): void {
     const { min, max } = this.dialConfig;
-    this.settings.frequency = Math.min(max, Math.max(min, freq));
+    this.settings.channel = Math.min(max, Math.max(min, freq));
     this.save();
     this.tick();
   }
 
   /** Snap to the nearest station at or beyond the current dial position. */
   seekStation(direction: 1 | -1): void {
-    const sorted = [...this.stations].sort((a, b) => a.frequency - b.frequency);
+    const sorted = [...this.stations].sort((a, b) => a.channel - b.channel);
     if (sorted.length === 0) return;
-    const here = this.settings.frequency;
+    const here = this.settings.channel;
     const candidates = direction > 0
-      ? sorted.filter((s) => s.frequency > here + 0.05)
-      : sorted.filter((s) => s.frequency < here - 0.05).reverse();
+      ? sorted.filter((s) => s.channel > here + 0.25)
+      : sorted.filter((s) => s.channel < here - 0.25).reverse();
     const next = candidates[0] ?? (direction > 0 ? sorted[0]! : sorted[sorted.length - 1]!);
-    this.setFrequency(next.frequency);
+    this.setFrequency(next.channel);
   }
 
   setVolume(v: number): void {
@@ -232,7 +232,7 @@ export class Radio {
 
   snapshot(nowMs = Date.now()): RadioState {
     const reading = this.clock.read(nowMs);
-    const dial = readDial(this.stations, this.settings.frequency, this.dialConfig);
+    const dial = readDial(this.stations, this.settings.channel, this.dialConfig);
     const scale = this.timelineScale(reading);
     const stations: StationState[] = dial.signals.map((signal) => {
       const layers = resolveStationLayers(signal.station, reading, this.library.map, {
@@ -294,7 +294,7 @@ export class Radio {
     navigator.mediaSession.playbackState = 'playing';
     navigator.mediaSession.metadata = new MediaMetadata({
       title: tuned?.playing ? tuned.playing.track.name : 'Static',
-      artist: tuned ? `${tuned.station.name} · ${tuned.station.frequency.toFixed(1)} FM` : 'Between stations',
+      artist: tuned ? `${tuned.station.name} · Channel ${tuned.station.channel}` : 'Between stations',
       album: tuned?.playing?.instance.program.name ?? '',
     });
   }

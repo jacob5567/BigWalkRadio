@@ -4,6 +4,7 @@
 //   npm run sim                      what every station is playing right now
 //   npm run sim -- --at 7:12am       ...at a given time of day
 //   npm run sim -- --watch           live, updating every second
+//   npm run sim -- --ch 5            sit the dial on a given channel
 //   npm run sim -- --game 24         a 24-real-minute broadcast day
 //   npm run sim -- --day             the full day's handover grid
 import { execFileSync } from 'node:child_process';
@@ -121,12 +122,12 @@ function parseAt(value, clock) {
 const { stations, tracks, missing } = buildLibrary();
 const gameMinutes = flag('game') === true ? 24 : Number(flag('game') ?? 0);
 const clock = gameMinutes > 0 ? new CompressedClock(gameMinutes * 60_000) : new RealTimeClock();
-const frequency = Number(flag('freq') ?? 100.9);
+const channel = Number(flag('channel') ?? flag('ch') ?? 1);
 const blendSeconds = Number(flag('blend') ?? 8);
 
 function renderNow(nowMs) {
   const reading = clock.read(nowMs);
-  const dial = readDial(stations, frequency, undefined);
+  const dial = readDial(stations, channel, undefined);
   const lines = [];
 
   const clockLabel = gameMinutes > 0
@@ -134,7 +135,7 @@ function renderNow(nowMs) {
     : 'real time';
   lines.push(
     `${bold('Big Walk Radio')}  ${dim(clockLabel)}   broadcast ${amber(formatTimeOfDay(reading.dayHour * 60))}` +
-    `   dial ${amber(frequency.toFixed(1))}  ${dim(`static ${(dial.staticGain * 100).toFixed(0)}%`)}`,
+    `   dial ${amber(String(channel))}  ${dim(`static ${(dial.staticGain * 100).toFixed(0)}%`)}`,
   );
   lines.push('');
 
@@ -142,7 +143,7 @@ function renderNow(nowMs) {
     const signal = dial.signals.find((s) => s.station.id === station.id);
     const layers = resolveStationLayers(station, reading, tracks, { blendSeconds });
     const tuned = dial.locked?.station.id === station.id;
-    const head = `${(tuned ? green('▸') : ' ')} ${amber(station.frequency.toFixed(1))}  ${bold(station.name.padEnd(15))}`;
+    const head = `${(tuned ? green('▸') : ' ')} ${amber(String(station.channel).padStart(2))}  ${bold(station.name.padEnd(15))}`;
 
     if (layers.length === 0) {
       lines.push(`${head}${dim('— nothing scheduled')}`);
@@ -176,7 +177,7 @@ function renderDay() {
   const reading = clock.read(Date.now());
   const rows = [];
   for (const station of stations) {
-    rows.push(bold(`${station.frequency.toFixed(1)}  ${station.name}`));
+    rows.push(bold(`${station.channel}  ${station.name}`));
     station.programs.forEach((program, i) => {
       const trackId = program.trackIds[0];
       const track = trackId ? tracks.get(trackId) : null;

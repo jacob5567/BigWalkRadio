@@ -1,16 +1,18 @@
 import type { DialConfig, Station } from './types';
 
 export const DEFAULT_DIAL: DialConfig = {
-  min: 87.5,
-  max: 108.0,
-  halfWidth: 0.35,
+  min: 1,
+  max: 8,
+  // Channels sit one apart, so the dial is clean on a whole number and mostly
+  // hiss halfway between two of them.
+  halfWidth: 0.18,
   capture: 2.2,
   staticFalloff: 1.6,
 };
 
 export interface StationSignal {
   station: Station;
-  /** MHz away from the dial. */
+  /** How many channels away from where the dial is sitting. */
   distance: number;
   /** Signal strength ignoring neighbours, 0..1. */
   raw: number;
@@ -19,7 +21,7 @@ export interface StationSignal {
 }
 
 export interface DialState {
-  frequency: number;
+  channel: number;
   signals: StationSignal[];
   /** Strongest station, if anything is receivable at all. */
   locked: StationSignal | null;
@@ -29,7 +31,7 @@ export interface DialState {
   staticGain: number;
 }
 
-/** Half strength at `halfWidth` MHz off, falling off fast after that. */
+/** Half strength at `halfWidth` channels off, falling off fast after that. */
 function rawSignal(distance: number, halfWidth: number): number {
   const x = distance / Math.max(1e-6, halfWidth);
   return Math.pow(2, -(x * x));
@@ -40,11 +42,11 @@ export const AUDIBLE_THRESHOLD = 0.02;
 
 export function readDial(
   stations: readonly Station[],
-  frequency: number,
+  channel: number,
   config: DialConfig = DEFAULT_DIAL,
 ): DialState {
   const signals: StationSignal[] = stations.map((station) => {
-    const distance = Math.abs(station.frequency - frequency);
+    const distance = Math.abs(station.channel - channel);
     return { station, distance, raw: rawSignal(distance, config.halfWidth), gain: 0 };
   });
 
@@ -59,7 +61,7 @@ export function readDial(
   }
 
   return {
-    frequency,
+    channel,
     signals,
     locked: best && best.raw > AUDIBLE_THRESHOLD ? best : null,
     lock,
