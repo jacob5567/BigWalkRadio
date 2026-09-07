@@ -1,0 +1,21 @@
+{
+  "name": "bigwalk-radio",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "TZ=UTC vitest run",
+    "test:watch": "TZ=UTC vitest",
+    "icons": "node tools/make-icons.mjs",
+    "sim": "vite-node tools/simulate.mjs",
+    "presets": "vite-node tools/make-presets.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "vite": "^7.1.0",
+    "vitest": "^3.2.0"
+  }
+}

@@ -1,0 +1,19 @@
+node_modules
+dist
+.DS_Store
+*.local
+
+# Local soundtrack copy for development only. No audio is ever bundled or
+# committed -- the app plays files the listener supplies at runtime.
+music/
+
+# Belt and braces: never commit audio from anywhere in the tree.
+*.flac
+*.mp3
+*.m4a
+*.aac
+*.ogg
+*.opus
+*.wav
+*.wma
+*.aiff

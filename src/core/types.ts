@@ -1,0 +1,69 @@
+/** A single user-supplied audio file, once imported and probed. */
+export interface Track {
+  id: string;
+  /** Display name; defaults to the filename minus extension. */
+  name: string;
+  /** Seconds. Probed from the decoded file, never trusted from metadata. */
+  duration: number;
+  mime: string;
+  size: number;
+  addedAt: number;
+  /** Album parsed out of the filename, if it named one. */
+  album?: string | null;
+  /** Time of day parsed out of the filename, in minutes past midnight. */
+  timeOfDayMinutes?: number | null;
+}
+
+/**
+ * A daypart. Programs partition a station's broadcast day; a program runs from
+ * its own `startHour` until the next program's `startHour` (wrapping past 24).
+ */
+export interface Program {
+  id: string;
+  name: string;
+  /** 0 <= startHour < 24, in broadcast-day hours (not necessarily real hours). */
+  startHour: number;
+  /** Ordered playlist. Loops for as long as the program is on air. */
+  trackIds: string[];
+}
+
+export interface Station {
+  id: string;
+  name: string;
+  /** Normalised album name, used to match imported files back to this station. */
+  albumKey?: string;
+  /** Dial position in MHz. */
+  frequency: number;
+  /** At least one. Kept sorted by startHour by `normalizeStation`. */
+  programs: Program[];
+}
+
+export type ClockMode = 'real' | 'game';
+
+export interface Settings {
+  mode: ClockMode;
+  /** Real minutes per broadcast day when in game mode. */
+  gameDayMinutes: number;
+  /**
+   * Game mode only. When true the track timeline is compressed along with the
+   * schedule, so songs are chopped short. When false (default) audio always
+   * plays at 1x and only the daypart schedule accelerates.
+   */
+  compressTrackTimeline: boolean;
+  frequency: number;
+  volume: number;
+  powered: boolean;
+  /** Real seconds of overlap when one daypart hands over to the next. */
+  blendSeconds: number;
+}
+
+export interface DialConfig {
+  min: number;
+  max: number;
+  /** MHz offset at which a station's raw signal is at half strength. */
+  halfWidth: number;
+  /** Higher = the strongest station suppresses its neighbours harder. */
+  capture: number;
+  /** Higher = static clears up faster as you approach a station. */
+  staticFalloff: number;
+}
