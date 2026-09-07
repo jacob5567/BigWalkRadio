@@ -4,7 +4,7 @@
 //   npm run sim                      what every station is playing right now
 //   npm run sim -- --at 7:12am       ...at a given time of day
 //   npm run sim -- --watch           live, updating every second
-//   npm run sim -- --ch 5            sit the dial on a given channel
+//   npm run sim -- --ch 5            mark a channel as the one switched on
 //   npm run sim -- --game 24         a 24-real-minute broadcast day
 //   npm run sim -- --day             the full day's handover grid
 import { existsSync } from 'node:fs';
@@ -15,7 +15,6 @@ import { Catalog } from '../src/core/catalog.ts';
 import { makeDefaultStations } from '../src/core/defaults.ts';
 import { formatTimeOfDay } from '../src/core/naming.ts';
 import { programWindow, resolveStationLayers } from '../src/core/schedule.ts';
-import { readDial } from '../src/core/tuner.ts';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -70,12 +69,12 @@ const tracks = new Catalog().map;
 const missing = [...tracks.values()].filter((t) => !existsSync(join(root, t.src)));
 const gameMinutes = flag('game') === true ? 24 : Number(flag('game') ?? 0);
 const clock = gameMinutes > 0 ? new CompressedClock(gameMinutes * 60_000) : new RealTimeClock();
-const channel = Number(flag('channel') ?? flag('ch') ?? 1);
+// Which position the switch is on, purely so the output marks it.
+const position = Number(flag('channel') ?? flag('ch') ?? 0);
 const blendSeconds = Number(flag('blend') ?? 8);
 
 function renderNow(nowMs) {
   const reading = clock.read(nowMs);
-  const dial = readDial(stations, channel, undefined);
   const lines = [];
 
   const clockLabel = gameMinutes > 0
@@ -83,14 +82,13 @@ function renderNow(nowMs) {
     : 'real time';
   lines.push(
     `${bold('Big Walk Radio')}  ${dim(clockLabel)}   broadcast ${amber(formatTimeOfDay(reading.dayHour * 60))}` +
-    `   dial ${amber(String(channel))}  ${dim(`static ${(dial.staticGain * 100).toFixed(0)}%`)}`,
+    `   switch ${amber(position === 0 ? 'off' : String(position))}`,
   );
   lines.push('');
 
   for (const station of stations) {
-    const signal = dial.signals.find((s) => s.station.id === station.id);
     const layers = resolveStationLayers(station, reading, tracks, { blendSeconds });
-    const tuned = dial.locked?.station.id === station.id;
+    const tuned = station.channel === position;
     const head = `${(tuned ? green('▸') : ' ')} ${amber(String(station.channel).padStart(2))}  ${bold(station.name.padEnd(15))}`;
 
     if (layers.length === 0) {
@@ -119,8 +117,7 @@ function renderNow(nowMs) {
 
     lines.push(
       `${head}${current.track.name.padEnd(16)} ${label}  ` +
-      `${mmss(current.offsetSec)}/${mmss(current.track.duration)} ${next}` +
-      `${dim(`  sig ${(signal.gain * 100).toFixed(0)}%`)}`,
+      `${mmss(current.offsetSec)}/${mmss(current.track.duration)} ${next}`,
     );
 
     const outgoing = layers.find((l) => l.role === 'outgoing');

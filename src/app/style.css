@@ -25,23 +25,42 @@ body {
 
 .pane { display: grid; gap: 14px; }
 
-.readout {
-  display: flex; gap: 14px; align-items: center;
-  background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px;
+.knob {
+  display: grid;
+  place-content: center;
+  gap: 2px;
+  width: 100%;
+  padding: 26px 12px;
+  background: var(--panel);
+  border: 1px solid var(--amber);
+  border-radius: 16px;
+  color: var(--amber);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color .15s, color .15s;
 }
-.channel-number { font-size: 56px; line-height: 1; color: var(--amber); min-width: 1.2em; text-align: center; }
-.channel-number.off { color: var(--line); }
-.readout-body { min-width: 0; display: grid; gap: 2px; }
-.station-name { font-size: 19px; }
-.daypart, .position, .handover, .blend, .note, .clock { color: var(--dim); font-size: 12px; }
-.track { color: var(--amber); font-size: 15px; }
-.blend:empty, .handover:empty { display: none; }
+.knob:active { background: #262119; }
+.knob.off { border-color: var(--line); color: var(--dim); }
+.knob.tuning { border-color: var(--dim); }
+.position-number { font-size: 68px; line-height: 1; font-variant-numeric: tabular-nums; }
+.position-label { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--dim); }
 
-.meters { display: grid; gap: 6px; }
-.meters label { display: grid; grid-template-columns: 4.5em 1fr; gap: 8px; align-items: center; font-size: 11px; color: var(--dim); }
-.meter { height: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
-.meter-fill { height: 100%; background: var(--amber); transition: width .12s linear; }
-.meter-fill.noise { background: var(--dim); }
+.readout {
+  display: grid;
+  gap: 2px;
+  min-height: 6.5em;
+  align-content: start;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+}
+.station-name { font-size: 19px; }
+.daypart, .elapsed, .handover, .blend, .note, .clock { color: var(--dim); font-size: 12px; }
+.track { color: var(--amber); font-size: 15px; }
+.station-name:empty, .blend:empty, .handover:empty { display: none; }
+
+.volume-row { display: grid; grid-template-columns: 4.5em 1fr; gap: 8px; align-items: center; }
 
 .row { display: flex; gap: 8px; align-items: center; }
 .row.wrap { flex-wrap: wrap; }
@@ -52,8 +71,6 @@ button, select, input[type='number'] {
   border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
 }
 button { min-height: 44px; }
-.step { width: 52px; font-size: 20px; }
-.power.on { color: var(--amber); border-color: var(--amber); }
 .mode.active { color: var(--amber); border-color: var(--amber); }
 .num { width: 5.5em; }
 

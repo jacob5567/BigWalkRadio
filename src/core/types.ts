@@ -59,20 +59,7 @@ export interface Settings {
    * plays at 1x and only the daypart schedule accelerates.
    */
   compressTrackTimeline: boolean;
-  channel: number;
   volume: number;
-  powered: boolean;
   /** Real seconds of overlap when one daypart hands over to the next. */
   blendSeconds: number;
-}
-
-export interface DialConfig {
-  min: number;
-  max: number;
-  /** Distance in channels at which a station's signal is at half strength. */
-  halfWidth: number;
-  /** Higher = the strongest station suppresses its neighbours harder. */
-  capture: number;
-  /** Higher = static clears up faster as you approach a station. */
-  staticFalloff: number;
 }

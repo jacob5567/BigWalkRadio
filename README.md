@@ -1,9 +1,9 @@
 # Big Walk Radio
 
-A progressive web app that behaves like the radio in Big Walk: eight channels,
-each running its own schedule. Seven of them play a track that loops from its
-time of day until the next one takes over and blends in over the top; the last
-plays its album on shuffle.
+A progressive web app that behaves like the radio in Big Walk. One button, and
+one position on it per channel plus an off position. Each channel plays a track
+that loops from its time of day until the next one takes over and blends in
+over the top.
 
 No audio ships with this app. The files are served by whoever hosts it.
 
@@ -43,13 +43,10 @@ music/
     ...
 ```
 
-The filenames are the schedule. An album whose tracks carry times becomes a
-dayparted channel: `-7-12am-` is when that track goes on air, and it plays on
-repeat until the next one starts. An album with no times on it becomes a
-shuffle channel instead, playing straight through its tracks in an order that
-changes each time round. Dayparted channels come first on the dial, shuffled
-ones after. The app reads all of this from `src/core/presets.ts`, generated
-from the filenames.
+The filenames are the schedule: `-7-12am-` is when that track goes on air, and
+it plays on repeat until the next one starts. An album whose tracks carry no
+times isn't a schedule, so it gets no channel. The app reads its channels from
+`src/core/presets.ts`, which is generated from those filenames.
 
 Two things the host's server must do:
 
@@ -88,12 +85,22 @@ and closing the app doesn't pause anything.
 
 Where two dayparts meet, the outgoing track keeps playing and fades under the
 incoming one on an equal-power crossfade. The blend length is adjustable on
-the radio screen.
+screen.
 
-A shuffle channel deals a fresh order every time it works through its album.
-The order comes from the pass number rather than being stored anywhere, so it
-is random to listen to but identical for everyone listening, and reloading
-doesn't reshuffle it. A track never repeats across a pass boundary.
+## The switch
 
-Underneath the eight channels is an analog dial: signal falls off either side
-of a channel, the strongest one captures the receiver, and the gaps are static.
+There is one control. It clicks from off through channel 1, 2, 3 … and back
+around to off. Every change is covered by a short burst of static that the
+incoming channel then rises through, so nothing ever cuts straight from one
+track to another — and turning it off fades the static away to silence rather
+than stopping dead.
+
+The radio always opens switched off. A browser won't start audio without a
+press, so a remembered position could only ever be a lie; volume and the clock
+settings are remembered.
+
+The scheduler can also play a program on shuffle, dealing a fresh order each
+time through from the pass number rather than storing one — random to listen
+to, identical for everyone, and unchanged by reloading. Nothing on the dial
+uses it at the moment.
+

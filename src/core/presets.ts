@@ -251,62 +251,10 @@ export const STATION_PRESETS: Station[] = [
         ]
       }
     ]
-  },
-  {
-    "id": "st-bsides",
-    "name": "B-Sides",
-    "albumKey": "bsides",
-    "channel": 8,
-    "programs": [
-      {
-        "id": "st-bsides-p1",
-        "name": "B-Sides",
-        "startHour": 0,
-        "trackIds": [
-          "music/aksfx - B-Sides (Original Music from Big Walk)/aksfx - B-Sides (Original Music from Big Walk) - 01 Silent Gauntlet.mp3",
-          "music/aksfx - B-Sides (Original Music from Big Walk)/aksfx - B-Sides (Original Music from Big Walk) - 02 Menu Music.mp3",
-          "music/aksfx - B-Sides (Original Music from Big Walk)/aksfx - B-Sides (Original Music from Big Walk) - 03 Mic Select.mp3",
-          "music/aksfx - B-Sides (Original Music from Big Walk)/aksfx - B-Sides (Original Music from Big Walk) - 04 Credits.mp3"
-        ],
-        "order": "shuffle"
-      }
-    ]
   }
 ];
 
 export const TRACK_CATALOG: Track[] = [
-  {
-    "id": "music/aksfx - B-Sides (Original Music from Big Walk)/aksfx - B-Sides (Original Music from Big Walk) - 01 Silent Gauntlet.mp3",
-    "name": "Silent Gauntlet",
-    "duration": 1521.509,
-    "src": "music/aksfx - B-Sides (Original Music from Big Walk)/aksfx - B-Sides (Original Music from Big Walk) - 01 Silent Gauntlet.mp3",
-    "album": "B-Sides",
-    "timeOfDayMinutes": null
-  },
-  {
-    "id": "music/aksfx - B-Sides (Original Music from Big Walk)/aksfx - B-Sides (Original Music from Big Walk) - 02 Menu Music.mp3",
-    "name": "Menu Music",
-    "duration": 243.198,
-    "src": "music/aksfx - B-Sides (Original Music from Big Walk)/aksfx - B-Sides (Original Music from Big Walk) - 02 Menu Music.mp3",
-    "album": "B-Sides",
-    "timeOfDayMinutes": null
-  },
-  {
-    "id": "music/aksfx - B-Sides (Original Music from Big Walk)/aksfx - B-Sides (Original Music from Big Walk) - 03 Mic Select.mp3",
-    "name": "Mic Select",
-    "duration": 189.392,
-    "src": "music/aksfx - B-Sides (Original Music from Big Walk)/aksfx - B-Sides (Original Music from Big Walk) - 03 Mic Select.mp3",
-    "album": "B-Sides",
-    "timeOfDayMinutes": null
-  },
-  {
-    "id": "music/aksfx - B-Sides (Original Music from Big Walk)/aksfx - B-Sides (Original Music from Big Walk) - 04 Credits.mp3",
-    "name": "Credits",
-    "duration": 180.175,
-    "src": "music/aksfx - B-Sides (Original Music from Big Walk)/aksfx - B-Sides (Original Music from Big Walk) - 04 Credits.mp3",
-    "album": "B-Sides",
-    "timeOfDayMinutes": null
-  },
   {
     "id": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 01 -5-23am- Alba.mp3",
     "name": "Alba",

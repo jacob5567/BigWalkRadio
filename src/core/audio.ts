@@ -1,5 +1,3 @@
-import { lowpassHz } from './tuner';
-
 export type SyncMode = 'lock' | 'free';
 
 export interface VoiceTarget {
@@ -23,7 +21,6 @@ export interface VoiceTarget {
 interface Voice {
   el: HTMLAudioElement;
   source: MediaElementAudioSourceNode;
-  filter: BiquadFilterNode;
   gain: GainNode;
   trackId: string | null;
   /** Generation counter so a slow async src load can't clobber a newer one. */
@@ -116,7 +113,6 @@ export class AudioEngine {
     voice.el.loop = target.loop;
 
     voice.gain.gain.setTargetAtTime(target.gain, ctx.currentTime, RAMP);
-    voice.filter.frequency.setTargetAtTime(lowpassHz(target.gain), ctx.currentTime, RAMP);
 
     if (voice.trackId !== target.trackId) {
       voice.epoch++;
@@ -169,17 +165,13 @@ export class AudioEngine {
     });
 
     const source = ctx.createMediaElementSource(el);
-    const filter = ctx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = 20000;
     const gain = ctx.createGain();
     gain.gain.value = 0;
 
-    source.connect(filter);
-    filter.connect(gain);
+    source.connect(gain);
     gain.connect(this.master!);
 
-    const voice: Voice = { el, source, filter, gain, trackId: null, epoch: 0, releasing: false };
+    const voice: Voice = { el, source, gain, trackId: null, epoch: 0, releasing: false };
     this.voices.set(key, voice);
     return voice;
   }
@@ -196,7 +188,6 @@ export class AudioEngine {
       voice.el.removeAttribute('src');
       voice.el.load();
       voice.source.disconnect();
-      voice.filter.disconnect();
       voice.gain.disconnect();
       this.voices.delete(key);
     }, RELEASE_MS);

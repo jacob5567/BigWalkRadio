@@ -55,7 +55,7 @@ function addTrack(dir, file, album, timeOfDayMinutes, title) {
 }
 
 const scheduled = [];
-const shuffled = [];
+const skipped = [];
 
 for (const dir of albums) {
   const files = readdirSync(join(musicDir, dir)).filter((f) => AUDIO.test(f)).sort();
@@ -84,25 +84,13 @@ for (const dir of albums) {
       })),
     });
   } else {
-    // Everything else is one channel playing the album on shuffle, all day.
-    shuffled.push({
-      id: `st-${key}`,
-      name,
-      albumKey: key,
-      channel: 0,
-      programs: [{
-        id: `st-${key}-p1`,
-        name,
-        startHour: 0,
-        trackIds: parsed.map((p) => addTrack(dir, p.file, name, null, p.title)),
-        order: 'shuffle',
-      }],
-    });
+    // An album with no times on it isn't a schedule, so it gets no channel.
+    // The scheduler still supports shuffled programs if one is wanted later.
+    skipped.push(name);
   }
 }
 
-// Dayparted channels come first on the dial, then the shuffled ones.
-const stations = [...scheduled, ...shuffled];
+const stations = scheduled;
 stations.forEach((s, i) => { s.channel = i + 1; });
 
 const used = new Set(stations.flatMap((s) => s.programs.flatMap((p) => p.trackIds)));
@@ -122,10 +110,8 @@ export const TRACK_CATALOG: Track[] = ${JSON.stringify(tracks, null, 2)};
 
 console.log(`${stations.length} channels, ${tracks.length} tracks`);
 for (const s of stations) {
-  const program = s.programs[0];
-  console.log(program.order === 'shuffle'
-    ? `  ${s.channel}  ${s.name}: ${program.trackIds.length} tracks on shuffle`
-    : `  ${s.channel}  ${s.name}: ${s.programs.length} dayparts`);
+  console.log(`  ${s.channel}  ${s.name}: ${s.programs.length} dayparts`);
 }
+if (skipped.length) console.log(`no times, so no channel: ${skipped.join(', ')}`);
 const missing = tracks.filter((t) => t.duration <= 0);
 if (missing.length) console.log(`WARNING: no duration for ${missing.length} track(s); the browser will probe them`);
