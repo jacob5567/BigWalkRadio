@@ -13,25 +13,13 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 /**
- * The last slot on the dial. The soundtrack release only ships seven
- * time-stamped albums, so this one starts empty for the listener to fill.
- */
-export const CUSTOM_STATION_ID = 'st-custom';
-
-/**
- * Starter dial: the album schedules, with every daypart empty until the
- * listener imports their own audio.
+ * The dial, exactly as generated from what is on the server: one channel per
+ * album, dayparted where the filenames carry times and shuffled where they
+ * don't.
  */
 export function makeDefaultStations(): Station[] {
-  const presets: Station[] = STATION_PRESETS.map((s) => ({
-    ...s,
-    programs: s.programs.map((p) => ({ ...p, trackIds: [...p.trackIds] })),
+  return STATION_PRESETS.map((station) => ({
+    ...station,
+    programs: station.programs.map((program) => ({ ...program, trackIds: [...program.trackIds] })),
   }));
-  presets.push({
-    id: CUSTOM_STATION_ID,
-    name: 'Open Channel',
-    channel: presets.length + 1,
-    programs: [{ id: `${CUSTOM_STATION_ID}-p1`, name: 'Continuous', startHour: 0, trackIds: [] }],
-  });
-  return presets.sort((a, b) => a.channel - b.channel);
 }

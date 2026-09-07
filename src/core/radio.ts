@@ -36,7 +36,8 @@ type Listener = (state: RadioState) => void;
 export class Radio {
   readonly catalog = new Catalog();
   readonly engine: AudioEngine;
-  readonly dialConfig: DialConfig = DEFAULT_DIAL;
+  /** The dial spans whatever channels the server's music produced. */
+  readonly dialConfig: DialConfig;
 
   private settings: Settings = { ...DEFAULT_SETTINGS };
   private readonly stations: Station[] = makeDefaultStations().map(normalizeStation);
@@ -48,6 +49,12 @@ export class Radio {
   private lastMediaKey = '';
 
   constructor() {
+    const channels = this.stations.map((s) => s.channel);
+    this.dialConfig = {
+      ...DEFAULT_DIAL,
+      min: channels.length ? Math.min(...channels) : DEFAULT_DIAL.min,
+      max: channels.length ? Math.max(...channels) : DEFAULT_DIAL.max,
+    };
     this.engine = new AudioEngine((trackId) => this.catalog.urlFor(trackId));
     this.engine.onNeedsUpdate = () => this.tick();
   }

@@ -26,8 +26,14 @@ export interface Program {
   name: string;
   /** 0 <= startHour < 24, in broadcast-day hours (not necessarily real hours). */
   startHour: number;
-  /** Ordered playlist. Loops for as long as the program is on air. */
+  /** The playlist, played through for as long as the program is on air. */
   trackIds: string[];
+  /**
+   * How the playlist is ordered each time through. 'shuffle' reorders it on
+   * every pass, seeded by the pass number so the broadcast stays the same for
+   * everyone listening. Defaults to 'sequence'.
+   */
+  order?: 'sequence' | 'shuffle';
 }
 
 export interface Station {

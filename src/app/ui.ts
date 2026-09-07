@@ -23,7 +23,7 @@ export class RadioUI {
     signal: el('div', { class: 'meter-fill' }),
     noise: el('div', { class: 'meter-fill noise' }),
     power: el('button', { class: 'power', type: 'button' }, 'Off'),
-    dial: el('input', { class: 'dial', type: 'range', min: '1', max: '8', step: '0.02' }),
+    dial: el('input', { class: 'dial', type: 'range', step: '0.02' }),
     volume: el('input', { class: 'volume', type: 'range', min: '0', max: '1', step: '0.01' }),
     diagnostics: el('div', { class: 'diagnostics' }),
   };
@@ -38,6 +38,8 @@ export class RadioUI {
 
   mount(): void {
     const o = this.out;
+    o.dial.min = String(this.radio.dialConfig.min);
+    o.dial.max = String(this.radio.dialConfig.max);
 
     o.power.onclick = () => void this.radio.setPower(!this.radio.getSettings().powered);
     o.dial.addEventListener('input', () => this.radio.setChannel(Number(o.dial.value)));
@@ -94,10 +96,17 @@ export class RadioUI {
 
     const playing = tuned?.playing ?? null;
     if (playing) {
-      o.daypart.textContent = `${playing.instance.program.name} · from ${formatTimeOfDay(playing.instance.program.startHour * 60)}`;
+      // A shuffled channel has no dayparts to hand over between; it just runs
+      // through its album, so it counts down to the next track instead.
+      const shuffles = playing.instance.program.order === 'shuffle';
+      o.daypart.textContent = shuffles
+        ? `${playing.instance.program.name} · shuffle`
+        : `${playing.instance.program.name} · from ${formatTimeOfDay(playing.instance.program.startHour * 60)}`;
       o.track.textContent = playing.track.name;
       o.position.textContent = `${mmss(playing.offsetSec)} / ${mmss(playing.track.duration)}${playing.loops ? ' · looping' : ''}`;
-      o.handover.textContent = `next in ${humanSpan(playing.instance.endMs - state.reading.nowMs)}`;
+      o.handover.textContent = shuffles
+        ? `next track in ${humanSpan(playing.trackEndsAtMs - state.reading.nowMs)}`
+        : `next in ${humanSpan(playing.instance.endMs - state.reading.nowMs)}`;
     } else {
       o.daypart.textContent = tuned ? 'nothing scheduled' : '';
       o.track.textContent = '';

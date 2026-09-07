@@ -114,6 +114,55 @@ export function previousProgram(
   };
 }
 
+/** FNV-1a, so a program id turns into a stable seed. */
+function hashString(value: string): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < value.length; i++) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0;
+}
+
+function mulberry32(seed: number): () => number {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Fisher-Yates against a seeded generator, so the same pass always deals the same order. */
+function shuffled<T>(items: readonly T[], seed: number): T[] {
+  const out = [...items];
+  const random = mulberry32(seed);
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [out[i], out[j]] = [out[j]!, out[i]!];
+  }
+  return out;
+}
+
+/**
+ * The playlist as it is dealt for one pass. A shuffled program gets a fresh
+ * order every time through, derived from the pass number rather than stored,
+ * so every listener hears the same sequence and reloading changes nothing.
+ */
+export function orderForPass(program: Program, tracks: readonly Track[], pass: number): Track[] {
+  if (program.order !== 'shuffle' || tracks.length < 2) return [...tracks];
+  const seed = hashString(program.id);
+  const current = shuffled(tracks, seed ^ Math.imul(pass, 0x9e3779b1));
+  const previous = shuffled(tracks, seed ^ Math.imul(pass - 1, 0x9e3779b1));
+  // Don't let the pass boundary play the same track twice in a row.
+  if (current[0] === previous[previous.length - 1]) {
+    [current[0], current[1]] = [current[1]!, current[0]!];
+  }
+  return current;
+}
+
 /** Playable tracks of a program, in order, skipping missing or zero-length ones. */
 export function programTracks(program: Program, tracks: ReadonlyMap<string, Track>): Track[] {
   const out: Track[] = [];
@@ -150,22 +199,24 @@ export function playbackForInstance(
   if (cycleSec <= 0) return null;
 
   const elapsedSec = ((reading.nowMs - instance.startMs) / 1000) * timelineScale;
-  let pos = elapsedSec % cycleSec;
+  const pass = Math.floor(elapsedSec / cycleSec);
+  let pos = elapsedSec - pass * cycleSec;
   if (pos < 0) pos += cycleSec;
 
+  const ordered = orderForPass(instance.program, list, pass);
   let trackIndex = 0;
-  for (const track of list) {
+  for (const track of ordered) {
     if (pos < track.duration) break;
     pos -= track.duration;
     trackIndex++;
   }
   // Guard against float drift landing exactly on the cycle boundary.
-  if (trackIndex >= list.length) {
-    trackIndex = list.length - 1;
-    pos = list[trackIndex]!.duration;
+  if (trackIndex >= ordered.length) {
+    trackIndex = ordered.length - 1;
+    pos = ordered[trackIndex]!.duration;
   }
 
-  const track = list[trackIndex]!;
+  const track = ordered[trackIndex]!;
   const remainingRealMs = ((track.duration - pos) / timelineScale) * 1000;
   return {
     station,

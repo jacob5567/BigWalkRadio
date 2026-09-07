@@ -35,17 +35,32 @@ describe('Radio end to end', () => {
     expect(stations.some((s) => s.name === STATION)).toBe(true);
   });
 
-  it('comes ready to play, with every album daypart already pointing at a file', () => {
+  it('comes ready to play, with every channel already pointing at real files', () => {
     for (const station of radio.getStations()) {
-      if (station.name === 'Open Channel') continue;
       for (const program of station.programs) {
-        expect(program.trackIds).toHaveLength(1);
-        const track = radio.catalog.get(program.trackIds[0]!);
-        expect(track, `${station.name}/${program.name}`).toBeDefined();
-        expect(track!.duration).toBeGreaterThan(0);
-        expect(track!.src.startsWith('music/')).toBe(true);
+        expect(program.trackIds.length, `${station.name}/${program.name}`).toBeGreaterThan(0);
+        for (const id of program.trackIds) {
+          const track = radio.catalog.get(id);
+          expect(track, `${station.name}/${program.name}`).toBeDefined();
+          expect(track!.duration).toBeGreaterThan(0);
+          expect(track!.src.startsWith('music/')).toBe(true);
+        }
       }
     }
+  });
+
+  it('gives the last channel to the album with no times on it, on shuffle', () => {
+    const last = radio.getStations().at(-1)!;
+    expect(last.channel).toBe(8);
+    expect(last.name).toBe('B-Sides');
+    expect(last.programs).toHaveLength(1);
+    expect(last.programs[0]!.order).toBe('shuffle');
+    expect(last.programs[0]!.trackIds.length).toBeGreaterThan(1);
+
+    radio.setChannel(last.channel);
+    const playing = radio.snapshot().tuned!.playing!;
+    // Shuffled channels move on to the next track rather than repeating one.
+    expect(playing.loops).toBe(false);
   });
 
   it('plays the daypart whose time has come', () => {

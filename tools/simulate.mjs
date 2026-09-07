@@ -99,14 +99,27 @@ function renderNow(nowMs) {
     }
 
     const current = layers.find((l) => l.role === 'current') ?? layers[0];
-    const loops = Math.floor(
-      ((reading.nowMs - current.instance.startMs) / 1000) / Math.max(1, current.track.duration),
-    );
-    const startsAt = formatTimeOfDay(current.instance.program.startHour * 60);
+    const program = current.instance.program;
+    const elapsedSec = (reading.nowMs - current.instance.startMs) / 1000;
+
+    let label;
+    let next;
+    if (program.order === 'shuffle') {
+      const pass = Math.floor(elapsedSec / current.cycleSec) + 1;
+      label = dim('shuffle'.padStart(8));
+      next = `${dim(`pass ${pass} · track ${current.trackIndex + 1}/${program.trackIds.length}`)}  ` +
+        `${dim(`→ next in ${humanSpan(current.trackEndsAtMs - reading.nowMs)}`)}`;
+    } else {
+      const loops = Math.floor(elapsedSec / Math.max(1, current.track.duration)) + 1;
+      label = dim(formatTimeOfDay(program.startHour * 60).padStart(8));
+      const upcoming = station.programs[(current.instance.index + 1) % station.programs.length];
+      next = `${dim(`loop ${loops}`)}  ` +
+        `${dim(`→ ${upcoming.name} in ${humanSpan(current.instance.endMs - reading.nowMs)}`)}`;
+    }
+
     lines.push(
-      `${head}${current.track.name.padEnd(16)} ${dim(startsAt.padStart(8))}  ` +
-      `${mmss(current.offsetSec)}/${mmss(current.track.duration)} ${dim(`loop ${loops + 1}`)}  ` +
-      `${dim(`→ ${station.programs[(current.instance.index + 1) % station.programs.length].name} in ${humanSpan(current.instance.endMs - reading.nowMs)}`)}` +
+      `${head}${current.track.name.padEnd(16)} ${label}  ` +
+      `${mmss(current.offsetSec)}/${mmss(current.track.duration)} ${next}` +
       `${dim(`  sig ${(signal.gain * 100).toFixed(0)}%`)}`,
     );
 
@@ -127,9 +140,17 @@ function renderDay() {
   for (const station of stations) {
     rows.push(bold(`${station.channel}  ${station.name}`));
     station.programs.forEach((program, i) => {
-      const trackId = program.trackIds[0];
-      const track = trackId ? tracks.get(trackId) : null;
       const windowMs = programWindow(station, i) * reading.dayLengthMs;
+      if (program.order === 'shuffle') {
+        const total = program.trackIds.reduce((sum, id) => sum + (tracks.get(id)?.duration ?? 0), 0);
+        rows.push(`       ${dim('shuffle')}  ${program.name} ${dim(`— ${(windowMs / 1000 / total).toFixed(1)} passes a day`)}`);
+        for (const id of program.trackIds) {
+          const track = tracks.get(id);
+          rows.push(`                  ${(track?.name ?? id).padEnd(16)}${dim(track ? mmss(track.duration) : 'no audio')}`);
+        }
+        return;
+      }
+      const track = program.trackIds[0] ? tracks.get(program.trackIds[0]) : null;
       const repeats = track ? (windowMs / 1000 / track.duration).toFixed(1) : '—';
       rows.push(
         `      ${formatTimeOfDay(program.startHour * 60).padStart(8)}  ${program.name.padEnd(16)}` +

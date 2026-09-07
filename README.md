@@ -1,8 +1,9 @@
 # Big Walk Radio
 
 A progressive web app that behaves like the radio in Big Walk: eight channels,
-each running its own schedule, where a track loops from its time of day until
-the next one takes over and blends in over the top.
+each running its own schedule. Seven of them play a track that loops from its
+time of day until the next one takes over and blends in over the top; the last
+plays its album on shuffle.
 
 No audio ships with this app. The files are served by whoever hosts it.
 
@@ -42,12 +43,13 @@ music/
     ...
 ```
 
-The filenames are the schedule: `-7-12am-` is when that track goes on air, and
-it plays on repeat until the next one starts. The app reads its dial from
-`src/core/presets.ts`, which is generated from those names.
-
-The **Sources** tab lists every file the app expects and checks whether the
-host is actually serving it.
+The filenames are the schedule. An album whose tracks carry times becomes a
+dayparted channel: `-7-12am-` is when that track goes on air, and it plays on
+repeat until the next one starts. An album with no times on it becomes a
+shuffle channel instead, playing straight through its tracks in an order that
+changes each time round. Dayparted channels come first on the dial, shuffled
+ones after. The app reads all of this from `src/core/presets.ts`, generated
+from the filenames.
 
 Two things the host's server must do:
 
@@ -86,7 +88,12 @@ and closing the app doesn't pause anything.
 
 Where two dayparts meet, the outgoing track keeps playing and fades under the
 incoming one on an equal-power crossfade. The blend length is adjustable on
-the radio tab.
+the radio screen.
+
+A shuffle channel deals a fresh order every time it works through its album.
+The order comes from the pass number rather than being stored anywhere, so it
+is random to listen to but identical for everyone listening, and reloading
+doesn't reshuffle it. A track never repeats across a pass boundary.
 
 Underneath the eight channels is an analog dial: signal falls off either side
 of a channel, the strongest one captures the receiver, and the gaps are static.
