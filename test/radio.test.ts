@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { Catalog } from '../src/core/catalog';
 import { setKV } from '../src/core/db';
 import { Radio } from '../src/core/radio';
@@ -25,6 +25,7 @@ describe('the switch', () => {
   });
 
   afterEach(() => {
+    radio.dispose();
     vi.useRealTimers();
     vi.unstubAllGlobals();
   });
@@ -140,6 +141,14 @@ describe('the switch', () => {
 });
 
 describe('what the radio remembers', () => {
+  const built: Radio[] = [];
+  const open = async () => {
+    const radio = new Radio();
+    built.push(radio);
+    await radio.init();
+    return radio;
+  };
+
   beforeEach(async () => {
     installBrowserStubs();
     await resetStorage();
@@ -148,21 +157,20 @@ describe('what the radio remembers', () => {
   });
 
   afterEach(() => {
+    for (const radio of built.splice(0)) radio.dispose();
     vi.useRealTimers();
     vi.unstubAllGlobals();
   });
 
   it('keeps volume and clock settings, but always comes back off', async () => {
-    const radio = new Radio();
-    await radio.init();
+    const radio = await open();
     await radio.setPosition(4);
     radio.setVolume(0.42);
     radio.setMode('game');
     radio.setGameDayMinutes(12);
     await new Promise((resolve) => setTimeout(resolve, 400)); // debounced save
 
-    const reopened = new Radio();
-    await reopened.init();
+    const reopened = await open();
     expect(reopened.getSettings().volume).toBeCloseTo(0.42, 6);
     expect(reopened.getSettings().mode).toBe('game');
     expect(reopened.getSettings().gameDayMinutes).toBe(12);
@@ -174,15 +182,13 @@ describe('what the radio remembers', () => {
     await setKV('stations', [
       { id: 'stale', name: 'Stale', channel: 1, programs: [{ id: 'p', name: 'P', startHour: 0, trackIds: [] }] },
     ]);
-    const radio = new Radio();
-    await radio.init();
+    const radio = await open();
     expect(radio.getStations()).toHaveLength(7);
     expect(radio.getStations().some((s) => s.name === 'Stale')).toBe(false);
   });
 
   it('runs the schedule faster in game mode', async () => {
-    const radio = new Radio();
-    await radio.init();
+    const radio = await open();
     radio.setMode('game');
     radio.setGameDayMinutes(24);
     expect(radio.snapshot().reading.timelineRate).toBeCloseTo(60, 6);
@@ -218,6 +224,7 @@ describe('the catalog behind it', () => {
     await resetStorage();
     const radio = new Radio();
     await radio.init();
+    onTestFinished(() => radio.dispose());
 
     for (const station of radio.getStations()) {
       for (const program of station.programs) {
@@ -250,6 +257,7 @@ describe('RadioUI', () => {
     const root = document.createElement('div');
     document.body.append(root);
     const radio = new Radio();
+    onTestFinished(() => radio.dispose());
     new RadioUI(radio, root).mount();
     await radio.init();
     const knob = root.querySelector<HTMLButtonElement>('.knob')!;

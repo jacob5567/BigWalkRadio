@@ -213,9 +213,26 @@ export class Radio {
   private startTicking(): void {
     if (this.timer !== null) return;
     this.timer = window.setInterval(() => this.tick(), TICK_MS);
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) this.tick();
-    });
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
+  }
+
+  private readonly onVisibilityChange = () => {
+    if (!document.hidden) this.tick();
+  };
+
+  /** Stop ticking and release the audio hardware. */
+  dispose(): void {
+    if (this.timer !== null) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+    if (this.saveTimer !== null) {
+      clearTimeout(this.saveTimer);
+      this.saveTimer = null;
+    }
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
+    this.listeners.clear();
+    this.engine.dispose();
   }
 
   private updateMediaSession(state: RadioState): void {
