@@ -13,6 +13,10 @@ const CONTENT_TYPES: Record<string, string> = {
   '.ogg': 'audio/ogg',
   '.opus': 'audio/ogg',
   '.wav': 'audio/wav',
+  // Cover art sits alongside the audio in the album folders.
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
 };
 
 /**

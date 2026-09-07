@@ -37,8 +37,8 @@ index.html
 assets/
 music/
   aksfx - Radio- Lobby (Original Music from Big Walk)/
-    aksfx - Radio- Lobby (Original Music from Big Walk) - 01 -12-00am- Motif.flac
-    aksfx - Radio- Lobby (Original Music from Big Walk) - 02 -7-12am- Leitmotif.flac
+    aksfx - Radio- Lobby (Original Music from Big Walk) - 01 -12-00am- Motif.mp3
+    aksfx - Radio- Lobby (Original Music from Big Walk) - 02 -7-12am- Leitmotif.mp3
     ...
 ```
 
@@ -53,14 +53,15 @@ Two things the host's server must do:
 
 - **Honour `Range` requests.** The player seeks constantly to stay on the
   broadcast schedule, and cannot without them.
-- **Serve the audio MIME types** (`audio/flac` and friends).
+- **Serve the audio MIME types** (`audio/mpeg` for MP3, and friends).
 
 The dev server does both; `dist/` is a static bundle, so anything that serves
 files correctly will do in production.
 
 ### A different set of music
 
-If the files change, regenerate the dial:
+The format doesn't matter as long as the browser can play it — MP3, FLAC,
+Opus, AAC. If the files change, regenerate the dial:
 
 ```
 npm run presets    # rescans ./music, rewrites src/core/presets.ts

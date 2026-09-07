@@ -21,14 +21,7 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
-#app { max-width: 640px; margin: 0 auto; padding: 0 12px 32px; }
-
-.tabs { display: flex; gap: 6px; padding: 12px 0; position: sticky; top: 0; background: var(--bg); z-index: 2; }
-.tab {
-  flex: 1; padding: 12px; text-transform: uppercase; letter-spacing: .08em; font-size: 12px;
-  background: var(--panel); color: var(--dim); border: 1px solid var(--line); border-radius: 8px;
-}
-.tab.active { color: var(--amber); border-color: var(--amber); }
+#app { max-width: 640px; margin: 0 auto; padding: 16px 12px 32px; }
 
 .pane { display: grid; gap: 14px; }
 
@@ -68,33 +61,3 @@ input[type='range'] { flex: 1; min-width: 0; accent-color: var(--amber); height:
 label { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--dim); }
 
 .diagnostics { font-size: 11px; color: var(--dim); word-break: break-word; }
-
-.station { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
-.station h2 { margin: 0 0 10px; font-size: 15px; display: flex; gap: 8px; align-items: center; }
-.chip {
-  display: inline-grid; place-items: center; width: 26px; height: 26px;
-  border-radius: 6px; background: var(--bg); color: var(--amber); font-size: 13px;
-}
-.program { display: flex; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); }
-.program .time { color: var(--amber); font-size: 12px; width: 7em; padding-top: 2px; }
-.program-name { font-size: 14px; }
-.program select { width: 100%; margin-top: 6px; }
-
-.album { margin: 14px 0 2px; font-size: 12px; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; }
-.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--line); flex: none; }
-.dot.present { background: var(--amber); }
-.dot.missing { background: #b4472f; }
-.dot.checking { background: var(--dim); }
-.path { word-break: break-all; }
-
-.file {
-  display: block; background: var(--panel); border: 1px solid var(--line);
-  border-radius: 8px; padding: 12px; color: var(--ink); font-size: 14px;
-}
-.file input { display: block; margin-top: 8px; font-size: 12px; color: var(--dim); }
-
-.track-list { display: grid; gap: 8px; }
-.track-row {
-  display: flex; gap: 10px; align-items: center;
-  background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px;
-}

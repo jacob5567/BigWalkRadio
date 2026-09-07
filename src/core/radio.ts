@@ -8,7 +8,6 @@ import { AUDIBLE_THRESHOLD, DEFAULT_DIAL, readDial, type DialState, type Station
 import type { ClockMode, DialConfig, Settings, Station } from './types';
 
 const KEY_SETTINGS = 'settings';
-const KEY_STATIONS = 'stations';
 /** How many streams may sound at once. Mobile browsers throttle beyond a handful. */
 const MAX_VOICES = 4;
 const TICK_MS = 250;
@@ -40,7 +39,7 @@ export class Radio {
   readonly dialConfig: DialConfig = DEFAULT_DIAL;
 
   private settings: Settings = { ...DEFAULT_SETTINGS };
-  private stations: Station[] = makeDefaultStations();
+  private readonly stations: Station[] = makeDefaultStations().map(normalizeStation);
   private clock: BroadcastClock = makeClock(DEFAULT_SETTINGS.mode, DEFAULT_SETTINGS.gameDayMinutes);
   private listeners = new Set<Listener>();
   private timer: number | null = null;
@@ -55,9 +54,7 @@ export class Radio {
 
   async init(): Promise<void> {
     const savedSettings = await getKV<Partial<Settings>>(KEY_SETTINGS);
-    const savedStations = await getKV<Station[]>(KEY_STATIONS);
     if (savedSettings) this.settings = { ...DEFAULT_SETTINGS, ...savedSettings, powered: false };
-    if (savedStations?.length) this.stations = savedStations.map(normalizeStation);
     this.clock = makeClock(this.settings.mode, this.settings.gameDayMinutes);
     this.ready = true;
     this.startTicking();
@@ -143,18 +140,6 @@ export class Radio {
     this.tick();
   }
 
-  // --- station editing ------------------------------------------------------
-
-  updateStations(next: Station[]): void {
-    this.stations = next.map(normalizeStation);
-    this.save();
-    this.tick();
-  }
-
-  mutateStation(id: string, fn: (station: Station) => Station): void {
-    this.updateStations(this.stations.map((s) => (s.id === id ? fn({ ...s, programs: s.programs.map((p) => ({ ...p })) }) : s)));
-  }
-
   // --- scheduling -----------------------------------------------------------
 
   private timelineScale(reading: ClockReading): number {
@@ -235,7 +220,6 @@ export class Radio {
     this.saveTimer = window.setTimeout(() => {
       this.saveTimer = null;
       void setKV(KEY_SETTINGS, this.settings);
-      void setKV(KEY_STATIONS, this.stations);
     }, 300);
   }
 

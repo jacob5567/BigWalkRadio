@@ -2,6 +2,7 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Catalog } from '../src/core/catalog';
+import { setKV } from '../src/core/db';
 import { Radio } from '../src/core/radio';
 import { RadioUI } from '../src/app/ui';
 import { installBrowserStubs, resetStorage } from './browser-stubs';
@@ -120,6 +121,17 @@ describe('Radio end to end', () => {
     expect(settings.powered).toBe(false);
   });
 
+  it('takes the dial from the server, ignoring any it stored before', async () => {
+    // A dial saved by an older build must not survive a change of music.
+    await setKV('stations', [
+      { id: 'stale', name: 'Stale', channel: 1, programs: [{ id: 'p', name: 'P', startHour: 0, trackIds: [] }] },
+    ]);
+    const reopened = new Radio();
+    await reopened.init();
+    expect(reopened.getStations()).toHaveLength(8);
+    expect(reopened.getStations().some((s) => s.name === 'Stale')).toBe(false);
+  });
+
   it('runs the schedule faster in game mode', () => {
     radio.setMode('game');
     radio.setGameDayMinutes(24);
@@ -188,21 +200,6 @@ describe('RadioUI', () => {
     expect(root.querySelector('.station-name')!.textContent).toBe(STATION);
     expect(root.querySelector('.track')!.textContent).toBe(DAYPART);
     expect(root.querySelector('.position')!.textContent).toContain('looping');
-    expect(root.querySelectorAll('.tab')).toHaveLength(3);
   });
 
-  it('lists every daypart on the schedule tab', async () => {
-    const { root } = await mount();
-    root.querySelectorAll<HTMLButtonElement>('.tab')[1]!.click();
-    expect(root.querySelectorAll('.station')).toHaveLength(8);
-    // 24 dayparts across the seven albums, plus the empty eighth channel.
-    expect(root.querySelectorAll('.program')).toHaveLength(25);
-  });
-
-  it('lists the files the host has to provide', async () => {
-    const { root } = await mount();
-    root.querySelectorAll<HTMLButtonElement>('.tab')[2]!.click();
-    await vi.waitFor(() => expect(root.querySelectorAll('.track-row').length).toBe(24));
-    expect(root.querySelector('.path')!.textContent).toMatch(/^music\//);
-  });
 });

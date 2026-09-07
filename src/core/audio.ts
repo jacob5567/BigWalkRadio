@@ -44,6 +44,7 @@ export class AudioEngine {
   private readonly voices = new Map<string, Voice>();
   private volume = 0.8;
   private running = false;
+  private readonly failed = new Set<string>();
 
   /** Fired when a track ends, so the scheduler can hand us the next one at once. */
   onNeedsUpdate: (() => void) | null = null;
@@ -56,6 +57,11 @@ export class AudioEngine {
 
   get contextState(): AudioContextState | 'closed' {
     return this.ctx?.state ?? 'closed';
+  }
+
+  /** Tracks whose file could not be loaded from the server. */
+  get failedTrackIds(): ReadonlySet<string> {
+    return this.failed;
   }
 
   /** Must be called from a user gesture (iOS requires it). */
@@ -119,6 +125,7 @@ export class AudioEngine {
       if (!url) return;
       voice.el.src = url;
       voice.el.load();
+      this.failed.delete(target.trackId);
       this.seek(voice, target.offsetSec);
       void voice.el.play().catch(() => {});
       return;
@@ -156,6 +163,10 @@ export class AudioEngine {
     // Keeps iOS from treating each station as a separate "now playing" item.
     el.setAttribute('playsinline', '');
     el.addEventListener('ended', () => this.onNeedsUpdate?.());
+    el.addEventListener('error', () => {
+      const voice = this.voices.get(key);
+      if (voice?.trackId) this.failed.add(voice.trackId);
+    });
 
     const source = ctx.createMediaElementSource(el);
     const filter = ctx.createBiquadFilter();
