@@ -60,6 +60,8 @@ export interface Settings {
    */
   compressTrackTimeline: boolean;
   volume: number;
+  /** The channel the on/off switch returns to. Not the current position. */
+  lastChannel: number;
   /** Real seconds of overlap when one daypart hands over to the next. */
   blendSeconds: number;
 }

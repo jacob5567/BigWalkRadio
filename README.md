@@ -1,9 +1,8 @@
 # Big Walk Radio
 
-A progressive web app that behaves like the radio in Big Walk. One button, and
-one position on it per channel plus an off position. Each channel plays a track
-that loops from its time of day until the next one takes over and blends in
-over the top.
+A progressive web app that behaves like the radio in Big Walk. Each channel
+plays a track that loops from its time of day until the next one takes over and
+blends in over the top.
 
 No audio ships with this app. The files are served by whoever hosts it.
 
@@ -87,17 +86,26 @@ Where two dayparts meet, the outgoing track keeps playing and fades under the
 incoming one on an equal-power crossfade. The blend length is adjustable on
 screen.
 
-## The switch
+## The controls
 
-There is one control. It clicks from off through channel 1, 2, 3 … and back
-around to off. Every change is covered by a short burst of static that the
-incoming channel then rises through, so nothing ever cuts straight from one
-track to another — and turning it off fades the static away to silence rather
-than stopping dead.
+There are four ways in:
+
+- a **wheel** for volume — turn it, scroll it, or use the arrow keys
+- an **on/off switch**, which returns to the channel last listened to
+- **forward and back buttons**, which wrap around the channels and do nothing
+  while the radio is off, since the switch owns that
+- a **single button** that clicks on through each channel in turn and then off
+  again
+
+They all move the same thing underneath: one position, where 0 is off and
+1…n select a channel. So every change, from whichever control, is covered by
+the same short burst of static that the incoming channel then rises through —
+nothing ever cuts straight from one track to another, and switching off fades
+the static away to silence rather than stopping dead.
 
 The radio always opens switched off. A browser won't start audio without a
-press, so a remembered position could only ever be a lie; volume and the clock
-settings are remembered.
+press, so a remembered position could only ever be a lie. The channel it was
+left on is remembered, along with volume and the clock settings.
 
 The scheduler can also play a program on shuffle, dealing a fresh order each
 time through from the pass number rather than storing one — random to listen

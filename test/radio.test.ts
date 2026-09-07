@@ -85,6 +85,58 @@ describe('the switch', () => {
     expect(after.tune.settling).toBe(false);
   });
 
+  it('turns on with the switch, to the channel last listened to', async () => {
+    await radio.setPosition(4);
+    settle();
+    await radio.setPower(false);
+    settle();
+    expect(radio.snapshot().power).toBe(false);
+
+    await radio.setPower(true);
+    expect(radio.snapshot().position).toBe(4);
+  });
+
+  it('steps forward and back through the channels, wrapping both ways', async () => {
+    await radio.setPosition(1);
+    await radio.stepChannel(-1);
+    expect(radio.snapshot().position).toBe(7);
+    await radio.stepChannel(1);
+    expect(radio.snapshot().position).toBe(1);
+    await radio.stepChannel(1);
+    expect(radio.snapshot().position).toBe(2);
+  });
+
+  it('never steps past off, since the switch owns that', async () => {
+    await radio.stepChannel(1);
+    expect(radio.snapshot().position).toBe(0);
+    await radio.stepChannel(-1);
+    expect(radio.snapshot().position).toBe(0);
+  });
+
+  it('puts static over a change made with any of the controls', async () => {
+    await radio.setPower(true);
+    expect(radio.snapshot().tune.staticGain).toBe(1);
+    settle();
+
+    await radio.stepChannel(1);
+    expect(radio.snapshot().tune.staticGain).toBe(1);
+    settle();
+
+    await radio.advance();
+    expect(radio.snapshot().tune.staticGain).toBe(1);
+    settle();
+
+    await radio.setPower(false);
+    expect(radio.snapshot().tune.staticGain).toBe(1);
+  });
+
+  it('ignores a control that asks for the position it is already on', async () => {
+    await radio.setPosition(3);
+    settle();
+    await radio.setPower(true); // already on
+    expect(radio.snapshot().tune.settling).toBe(false);
+  });
+
   it('puts static over every change, not just the first', async () => {
     await radio.setPosition(2);
     settle();
@@ -160,6 +212,17 @@ describe('what the radio remembers', () => {
     for (const radio of built.splice(0)) radio.dispose();
     vi.useRealTimers();
     vi.unstubAllGlobals();
+  });
+
+  it('comes back on to the channel it was last left on', async () => {
+    const radio = await open();
+    await radio.setPosition(6);
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    const reopened = await open();
+    expect(reopened.snapshot().position).toBe(0);
+    await reopened.setPower(true);
+    expect(reopened.snapshot().position).toBe(6);
   });
 
   it('keeps volume and clock settings, but always comes back off', async () => {
@@ -271,10 +334,40 @@ describe('RadioUI', () => {
     expect(knob.classList.contains('off')).toBe(true);
   });
 
-  it('is the only control on the page', async () => {
+  it('offers a wheel, a switch, two steppers and the cycle button', async () => {
     const { root } = await mount();
+    expect(root.querySelectorAll('.wheel')).toHaveLength(1);
+    expect(root.querySelectorAll('.power')).toHaveLength(1);
+    expect(root.querySelectorAll('.step')).toHaveLength(2);
     expect(root.querySelectorAll('.knob')).toHaveLength(1);
-    expect(root.querySelectorAll('input[type=range]')).toHaveLength(1); // volume
+  });
+
+  it('turns on and off with the switch', async () => {
+    const { root, radio } = await mount();
+    const power = root.querySelector<HTMLButtonElement>('.power')!;
+    expect(power.getAttribute('aria-checked')).toBe('false');
+
+    power.click();
+    await vi.waitFor(() => expect(radio.snapshot().power).toBe(true));
+    expect(power.getAttribute('aria-checked')).toBe('true');
+
+    power.click();
+    await vi.waitFor(() => expect(radio.snapshot().power).toBe(false));
+  });
+
+  it('greys out the steppers until there is something to step between', async () => {
+    const { root, radio } = await mount();
+    const [back, forward] = [...root.querySelectorAll<HTMLButtonElement>('.step')];
+    expect(back!.disabled).toBe(true);
+
+    root.querySelector<HTMLButtonElement>('.power')!.click();
+    await vi.waitFor(() => expect(radio.snapshot().power).toBe(true));
+    expect(back!.disabled).toBe(false);
+
+    forward!.click();
+    await vi.waitFor(() => expect(radio.snapshot().position).toBe(2));
+    back!.click();
+    await vi.waitFor(() => expect(radio.snapshot().position).toBe(1));
   });
 
   it('advances a channel per press and says what is on', async () => {

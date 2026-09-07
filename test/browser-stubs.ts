@@ -88,6 +88,12 @@ export function installBrowserStubs(): void {
     },
   });
 
+  // jsdom implements no pointer capture, which the volume wheel takes hold of.
+  const element = window.Element.prototype as unknown as Record<string, unknown>;
+  element.setPointerCapture ??= () => {};
+  element.releasePointerCapture ??= () => {};
+  element.hasPointerCapture ??= () => false;
+
   // jsdom has no blob URLs; the engine only ever hands these back to an element.
   if (typeof URL.createObjectURL !== 'function') {
     let n = 0;

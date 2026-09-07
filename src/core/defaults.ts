@@ -7,6 +7,7 @@ export const DEFAULT_SETTINGS: Settings = {
   gameDayMinutes: 24,
   compressTrackTimeline: false,
   volume: 0.8,
+  lastChannel: 1,
   blendSeconds: DEFAULT_BLEND_SECONDS,
 };
 

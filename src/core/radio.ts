@@ -25,7 +25,9 @@ export interface RadioState {
   settings: Settings;
   /** 0 is off; 1..channels select a station. */
   position: number;
-  /** How many channels the switch has, not counting off. */
+  /** Whether the radio is on at all, i.e. the position isn't 0. */
+  power: boolean;
+  /** How many channels there are, not counting off. */
   channels: number;
   reading: ClockReading;
   /** Where the change of position has got to. */
@@ -93,19 +95,40 @@ export class Radio {
     return this.stations.length;
   }
 
-  // --- the switch -----------------------------------------------------------
+  // --- the controls ---------------------------------------------------------
+  //
+  // Four ways in, one position underneath, so every one of them gets the same
+  // burst of static over the change.
 
-  /** The one control: click on to the next position, wrapping through off. */
+  /** The on/off switch. Turning it on returns to the channel last listened to. */
+  async setPower(on: boolean): Promise<void> {
+    if (on === (this.position !== OFF)) return;
+    await this.setPosition(on ? this.settings.lastChannel : OFF);
+  }
+
+  /** The forward and back buttons. They wrap, and do nothing while off. */
+  async stepChannel(direction: 1 | -1): Promise<void> {
+    const count = this.stations.length;
+    if (this.position === OFF || count === 0) return;
+    await this.setPosition(((this.position - 1 + direction + count) % count) + 1);
+  }
+
+  /** The single button: on through each channel in turn, then off again. */
   async advance(): Promise<void> {
     await this.setPosition(nextPosition(this.position, this.stations.length));
   }
 
   async setPosition(position: number): Promise<void> {
     const next = Math.max(OFF, Math.min(this.stations.length, Math.round(position)));
+    if (next === this.position) return;
     this.position = next;
     this.switchedAtMs = Date.now();
-    // Starting the audio has to happen inside the press that turned it on.
-    if (next !== OFF) await this.engine.start();
+    if (next !== OFF) {
+      this.settings.lastChannel = next;
+      this.save();
+      // Starting the audio has to happen inside the press that turned it on.
+      await this.engine.start();
+    }
     this.tick();
   }
 
@@ -172,6 +195,7 @@ export class Radio {
       ready: this.ready,
       settings: { ...this.settings },
       position: this.position,
+      power: this.position !== OFF,
       channels: this.stations.length,
       reading,
       tune,

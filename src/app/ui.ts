@@ -3,14 +3,13 @@ import { formatTimeOfDay } from '../core/naming';
 import type { Radio, RadioState } from '../core/radio';
 import { OFF } from '../core/tuning';
 import { clear, el, humanSpan, mmss } from './dom';
+import { Wheel } from './wheel';
 
 /**
  * One screen, one control: a switch that clicks from off through each channel
  * and back to off. Everything else on the page is a readout.
  */
 export class RadioUI {
-  private draggingVolume = false;
-
   private readonly out = {
     position: el('div', { class: 'position-number' }),
     positionLabel: el('div', { class: 'position-label' }),
@@ -21,10 +20,21 @@ export class RadioUI {
     handover: el('div', { class: 'handover' }),
     blend: el('div', { class: 'blend' }),
     clock: el('div', { class: 'clock' }),
-    volume: el('input', { class: 'volume', type: 'range', min: '0', max: '1', step: '0.01' }),
     diagnostics: el('div', { class: 'diagnostics' }),
   };
 
+  private readonly volume = new Wheel({
+    label: 'Volume',
+    onInput: (value) => this.radio.setVolume(value),
+  });
+
+  private readonly power = el('button', { class: 'power', type: 'button', role: 'switch' },
+    el('span', { class: 'power-track' }, el('span', { class: 'power-thumb' })),
+    el('span', { class: 'power-label' }, 'power'),
+  );
+
+  private readonly back = el('button', { class: 'step', type: 'button', 'aria-label': 'Previous channel' }, '‹');
+  private readonly forward = el('button', { class: 'step', type: 'button', 'aria-label': 'Next channel' }, '›');
   private readonly knob = el('button', { class: 'knob', type: 'button' });
   private readonly modeReal = el('button', { class: 'mode', type: 'button' }, 'Real time');
   private readonly modeGame = el('button', { class: 'mode', type: 'button' }, 'Game time');
@@ -39,11 +49,9 @@ export class RadioUI {
 
     this.knob.append(o.position, o.positionLabel);
     this.knob.onclick = () => void this.radio.advance();
-
-    o.volume.addEventListener('input', () => this.radio.setVolume(Number(o.volume.value)));
-    o.volume.addEventListener('pointerdown', () => { this.draggingVolume = true; });
-    o.volume.addEventListener('pointerup', () => { this.draggingVolume = false; });
-    o.volume.addEventListener('pointercancel', () => { this.draggingVolume = false; });
+    this.power.onclick = () => void this.radio.setPower(!this.radio.snapshot().power);
+    this.back.onclick = () => void this.radio.stepChannel(-1);
+    this.forward.onclick = () => void this.radio.stepChannel(1);
 
     this.modeReal.onclick = () => this.radio.setMode('real');
     this.modeGame.onclick = () => this.radio.setMode('game');
@@ -55,7 +63,11 @@ export class RadioUI {
     this.root.append(el('section', { class: 'pane' },
       this.knob,
       el('div', { class: 'readout' }, o.station, o.daypart, o.track, o.elapsed, o.handover, o.blend),
-      el('label', { class: 'volume-row' }, 'volume', o.volume),
+      el('div', { class: 'controls' },
+        this.volume.el,
+        el('div', { class: 'stepper' }, this.back, this.forward),
+        this.power,
+      ),
       el('div', { class: 'row' }, this.modeReal, this.modeGame, o.clock),
       el('div', { class: 'row wrap' },
         el('label', {}, 'game day (real min)', this.dayMinutes),
@@ -118,7 +130,12 @@ export class RadioUI {
       ? formatDayHour(state.reading.dayHour)
       : `${formatDayHour(state.reading.dayHour)} · day ${state.reading.dayIndex} · ${state.reading.timelineRate.toFixed(0)}×`;
 
-    if (!this.draggingVolume) o.volume.value = String(state.settings.volume);
+    this.power.setAttribute('aria-checked', String(state.power));
+    this.power.classList.toggle('on', state.power);
+    this.back.disabled = !state.power;
+    this.forward.disabled = !state.power;
+    // Don't move the wheel out from under the hand that's turning it.
+    if (!this.volume.isTurning) this.volume.set(state.settings.volume);
     if (document.activeElement !== this.dayMinutes) this.dayMinutes.value = String(state.settings.gameDayMinutes);
     if (document.activeElement !== this.blendSeconds) this.blendSeconds.value = String(state.settings.blendSeconds);
     this.compress.checked = state.settings.compressTrackTimeline;
