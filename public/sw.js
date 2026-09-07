@@ -1,5 +1,6 @@
-// App-shell cache so the radio opens and plays offline. The listener's audio
-// lives in IndexedDB, not here.
+// App-shell cache so the radio opens offline. The audio is served by the host
+// from /music and is deliberately left to the browser's own HTTP cache: the
+// files are large, and precaching them would blow the storage quota.
 const CACHE = 'bigwalk-radio-v1';
 const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
@@ -17,7 +18,9 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const request = event.request;
-  if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return;
+  const url = new URL(request.url);
+  if (request.method !== 'GET' || url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith('/music/')) return;
 
   // Navigations come from the network first so a deploy is picked up promptly,
   // falling back to the cached shell when offline.

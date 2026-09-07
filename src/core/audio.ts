@@ -48,7 +48,7 @@ export class AudioEngine {
   /** Fired when a track ends, so the scheduler can hand us the next one at once. */
   onNeedsUpdate: (() => void) | null = null;
 
-  constructor(private readonly resolveUrl: (trackId: string) => Promise<string | null>) {}
+  constructor(private readonly resolveUrl: (trackId: string) => string | null) {}
 
   get isRunning(): boolean {
     return this.running;
@@ -99,10 +99,10 @@ export class AudioEngine {
     for (const id of [...this.voices.keys()]) {
       if (!wanted.has(id)) this.release(id);
     }
-    for (const target of targets) void this.applyTarget(target);
+    for (const target of targets) this.applyTarget(target);
   }
 
-  private async applyTarget(target: VoiceTarget): Promise<void> {
+  private applyTarget(target: VoiceTarget): void {
     const ctx = this.ctx;
     if (!ctx) return;
     const voice = this.ensureVoice(target.key);
@@ -113,10 +113,10 @@ export class AudioEngine {
     voice.filter.frequency.setTargetAtTime(lowpassHz(target.gain), ctx.currentTime, RAMP);
 
     if (voice.trackId !== target.trackId) {
-      const epoch = ++voice.epoch;
+      voice.epoch++;
       voice.trackId = target.trackId;
-      const url = await this.resolveUrl(target.trackId);
-      if (!url || voice.epoch !== epoch || !this.running) return;
+      const url = this.resolveUrl(target.trackId);
+      if (!url) return;
       voice.el.src = url;
       voice.el.load();
       this.seek(voice, target.offsetSec);

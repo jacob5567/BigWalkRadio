@@ -7,7 +7,7 @@ const at = (iso: string) => Date.parse(iso);
 const clock = new RealTimeClock();
 
 const track = (id: string, duration: number): Track => ({
-  id, name: id, duration, mime: 'audio/flac', size: 1, addedAt: 0,
+  id, name: id, duration, src: `music/${id}.flac`,
 });
 
 const tracks = new Map<string, Track>([

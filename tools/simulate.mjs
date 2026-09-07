@@ -7,19 +7,17 @@
 //   npm run sim -- --ch 5            sit the dial on a given channel
 //   npm run sim -- --game 24         a 24-real-minute broadcast day
 //   npm run sim -- --day             the full day's handover grid
-import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CompressedClock, RealTimeClock } from '../src/core/clock.ts';
+import { Catalog } from '../src/core/catalog.ts';
 import { makeDefaultStations } from '../src/core/defaults.ts';
-import { albumKey, formatTimeOfDay, parseTrackName } from '../src/core/naming.ts';
+import { formatTimeOfDay } from '../src/core/naming.ts';
 import { programWindow, resolveStationLayers } from '../src/core/schedule.ts';
 import { readDial } from '../src/core/tuner.ts';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const musicDir = join(root, 'music');
-const cachePath = join(root, 'node_modules/.cache-durations.json');
 
 const argv = process.argv.slice(2);
 const flag = (name, fallback = null) => {
@@ -33,59 +31,6 @@ const dim = (s) => `\x1b[2m${s}\x1b[0m`;
 const bold = (s) => `\x1b[1m${s}\x1b[0m`;
 const amber = (s) => `\x1b[33m${s}\x1b[0m`;
 const green = (s) => `\x1b[32m${s}\x1b[0m`;
-
-function probeDurations(files) {
-  const cache = existsSync(cachePath) ? JSON.parse(readFileSync(cachePath, 'utf8')) : {};
-  let probed = 0;
-  for (const file of files) {
-    if (cache[file] != null) continue;
-    try {
-      const out = execFileSync('ffprobe', [
-        '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', file,
-      ], { encoding: 'utf8' });
-      cache[file] = Number(out.trim());
-      probed++;
-    } catch {
-      cache[file] = 0;
-    }
-  }
-  if (probed) writeFileSync(cachePath, JSON.stringify(cache));
-  return cache;
-}
-
-/** Stand-in for the app's import step: scan ./music and file it into the dial. */
-function buildLibrary() {
-  const stations = makeDefaultStations();
-  const tracks = new Map();
-  if (!existsSync(musicDir)) return { stations, tracks, missing: true };
-
-  const paths = [];
-  for (const dir of readdirSync(musicDir)) {
-    const full = join(musicDir, dir);
-    if (!statSync(full).isDirectory()) continue;
-    for (const file of readdirSync(full)) {
-      if (/\.(flac|mp3|m4a|ogg|opus|wav|aac)$/i.test(file)) paths.push(join(full, file));
-    }
-  }
-  const durations = probeDurations(paths);
-
-  let id = 0;
-  for (const path of paths) {
-    const fileName = path.split('/').at(-1);
-    const parsed = parseTrackName(fileName);
-    const duration = durations[path] ?? 0;
-    if (!parsed.album || parsed.timeOfDayMinutes == null || duration <= 0) continue;
-    const station = stations.find((s) => (s.albumKey ?? albumKey(s.name)) === albumKey(parsed.album));
-    const program = station?.programs.find(
-      (p) => Math.abs(p.startHour * 60 - parsed.timeOfDayMinutes) <= 1,
-    );
-    if (!program) continue;
-    const trackId = `t${++id}`;
-    tracks.set(trackId, { id: trackId, name: parsed.title, duration, mime: 'audio/flac', size: 0, addedAt: 0 });
-    program.trackIds = [trackId];
-  }
-  return { stations, tracks, missing: false };
-}
 
 const mmss = (sec) => {
   const s = Math.max(0, Math.floor(sec));
@@ -119,7 +64,10 @@ function parseAt(value, clock) {
   throw new Error(`could not read a time from "${value}"`);
 }
 
-const { stations, tracks, missing } = buildLibrary();
+const stations = makeDefaultStations();
+const tracks = new Catalog().map;
+// The app resolves these over HTTP; here we just say whether the host has them.
+const missing = [...tracks.values()].filter((t) => !existsSync(join(root, t.src)));
 const gameMinutes = flag('game') === true ? 24 : Number(flag('game') ?? 0);
 const clock = gameMinutes > 0 ? new CompressedClock(gameMinutes * 60_000) : new RealTimeClock();
 const channel = Number(flag('channel') ?? flag('ch') ?? 1);
@@ -193,7 +141,9 @@ function renderDay() {
   return rows.join('\n');
 }
 
-if (missing) console.log(dim('no ./music directory — showing the empty dial\n'));
+if (missing.length) {
+  console.log(dim(`${missing.length} of ${tracks.size} files are not on disk; the dial will be silent there\n`));
+}
 
 if (flag('day')) {
   console.log(renderDay());

@@ -6,7 +6,7 @@ import type { Station, Track } from '../src/core/types';
 const at = (iso: string) => Date.parse(iso);
 
 function track(id: string, duration: number): Track {
-  return { id, name: id, duration, mime: 'audio/mpeg', size: 1, addedAt: 0 };
+  return { id, name: id, duration, src: `music/${id}.flac` };
 }
 
 const tracks = new Map<string, Track>([

@@ -1,21 +1,14 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { putTrack } from '../src/core/db';
+import { Catalog } from '../src/core/catalog';
 import { Radio } from '../src/core/radio';
 import { RadioUI } from '../src/app/ui';
-import type { Track } from '../src/core/types';
 import { installBrowserStubs, resetStorage } from './browser-stubs';
 
-const track = (id: string, name: string, duration: number): Track => ({
-  id, name, duration, mime: 'audio/flac', size: 1024, addedAt: Date.now(),
-});
-
-/** Put audio in the library without decoding anything. */
-async function seed(radio: Radio, tracks: Track[]): Promise<void> {
-  for (const t of tracks) await putTrack(t, new Blob(['x'], { type: t.mime }));
-  await radio.library.load();
-}
+/** The station the tests tune to, and the daypart on air at 10:00. */
+const STATION = 'Lobby';
+const DAYPART = 'Leitmotif';
 
 describe('Radio end to end', () => {
   let radio: Radio;
@@ -38,40 +31,36 @@ describe('Radio end to end', () => {
     const stations = radio.getStations();
     expect(stations).toHaveLength(8);
     expect(stations.map((s) => s.channel)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
-    expect(stations.some((s) => s.name === 'Lobby')).toBe(true);
+    expect(stations.some((s) => s.name === STATION)).toBe(true);
   });
 
-  it('is silent until the listener supplies audio', () => {
-    const state = radio.snapshot();
-    expect(state.stations.every((s) => s.layers.length === 0)).toBe(true);
+  it('comes ready to play, with every album daypart already pointing at a file', () => {
+    for (const station of radio.getStations()) {
+      if (station.name === 'Open Channel') continue;
+      for (const program of station.programs) {
+        expect(program.trackIds).toHaveLength(1);
+        const track = radio.catalog.get(program.trackIds[0]!);
+        expect(track, `${station.name}/${program.name}`).toBeDefined();
+        expect(track!.duration).toBeGreaterThan(0);
+        expect(track!.src.startsWith('music/')).toBe(true);
+      }
+    }
   });
 
-  it('files imported names into the matching station and daypart', async () => {
-    await seed(radio, [track('t1', 'Leitmotif', 281)]);
-    const lobby = radio.getStations().find((s) => s.name === 'Lobby')!;
-    const slot = lobby.programs.find((p) => p.name === 'Leitmotif')!;
-    radio.mutateStation(lobby.id, (s) => ({
-      ...s,
-      programs: s.programs.map((p) => (p.id === slot.id ? { ...p, trackIds: ['t1'] } : p)),
-    }));
-
+  it('plays the daypart whose time has come', () => {
+    const lobby = radio.getStations().find((s) => s.name === STATION)!;
     radio.setChannel(lobby.channel);
+
     const tuned = radio.snapshot().tuned!;
-    expect(tuned.station.name).toBe('Lobby');
-    expect(tuned.playing!.track.name).toBe('Leitmotif');
-    // 10:00 is 2h48m into the 07:12 daypart, so the track has looped.
+    expect(tuned.station.name).toBe(STATION);
+    expect(tuned.playing!.instance.program.name).toBe(DAYPART);
+    // 10:00 is well into the 07:12 daypart, so the track has looped.
     expect(tuned.playing!.loops).toBe(true);
     expect(tuned.playing!.offsetSec).toBeGreaterThan(0);
   });
 
-  it('hands the right streams to the audio engine once powered on', async () => {
-    await seed(radio, [track('t1', 'Leitmotif', 281)]);
-    const lobby = radio.getStations().find((s) => s.name === 'Lobby')!;
-    const slot = lobby.programs.find((p) => p.name === 'Leitmotif')!;
-    radio.mutateStation(lobby.id, (s) => ({
-      ...s,
-      programs: s.programs.map((p) => (p.id === slot.id ? { ...p, trackIds: ['t1'] } : p)),
-    }));
+  it('hands the right stream to the audio engine once powered on', async () => {
+    const lobby = radio.getStations().find((s) => s.name === STATION)!;
     radio.setChannel(lobby.channel);
 
     const update = vi.spyOn(radio.engine, 'update');
@@ -80,20 +69,13 @@ describe('Radio end to end', () => {
 
     const targets = update.mock.lastCall![0];
     expect(targets).toHaveLength(1);
-    expect(targets[0]).toMatchObject({ trackId: 't1', loop: true, sync: 'lock' });
+    expect(targets[0]).toMatchObject({ loop: true, sync: 'lock' });
+    expect(radio.catalog.get(targets[0]!.trackId)!.name).toBe(DAYPART);
     expect(targets[0]!.gain).toBeCloseTo(1, 6);
   });
 
   it('feeds both sides of a handover to the engine at once', async () => {
-    await seed(radio, [track('t1', 'Motif', 270), track('t2', 'Leitmotif', 281)]);
-    const lobby = radio.getStations().find((s) => s.name === 'Lobby')!;
-    radio.mutateStation(lobby.id, (s) => ({
-      ...s,
-      programs: s.programs.map((p) =>
-        p.name === 'Motif' ? { ...p, trackIds: ['t1'] }
-        : p.name === 'Leitmotif' ? { ...p, trackIds: ['t2'] }
-        : p),
-    }));
+    const lobby = radio.getStations().find((s) => s.name === STATION)!;
     radio.setChannel(lobby.channel);
     await radio.setPower(true);
 
@@ -104,17 +86,12 @@ describe('Radio end to end', () => {
 
     const targets = update.mock.lastCall![0];
     expect(targets).toHaveLength(2);
-    expect(targets.map((t) => t.trackId).sort()).toEqual(['t1', 't2']);
+    expect(targets.map((t) => radio.catalog.get(t.trackId)!.name).sort()).toEqual(['Leitmotif', 'Motif']);
     for (const target of targets) expect(target.gain).toBeCloseTo(Math.SQRT1_2, 3);
   });
 
-  it('goes quiet between channels and loud on one', async () => {
-    await seed(radio, [track('t1', 'Leitmotif', 281)]);
-    const lobby = radio.getStations().find((s) => s.name === 'Lobby')!;
-    radio.mutateStation(lobby.id, (s) => ({
-      ...s,
-      programs: s.programs.map((p) => (p.name === 'Leitmotif' ? { ...p, trackIds: ['t1'] } : p)),
-    }));
+  it('goes quiet between channels and loud on one', () => {
+    const lobby = radio.getStations().find((s) => s.name === STATION)!;
 
     radio.setChannel(lobby.channel);
     expect(radio.snapshot().dial.staticGain).toBeCloseTo(0, 3);
@@ -130,7 +107,6 @@ describe('Radio end to end', () => {
     radio.setVolume(0.42);
     radio.setMode('game');
     radio.setGameDayMinutes(12);
-    await vi.waitFor(() => expect(radio.getSettings().channel).toBe(6));
     await new Promise((resolve) => setTimeout(resolve, 400)); // debounced save
 
     const reopened = new Radio();
@@ -150,19 +126,34 @@ describe('Radio end to end', () => {
     expect(radio.snapshot().reading.timelineRate).toBeCloseTo(60, 6);
     expect(radio.snapshot().reading.mode).toBe('game');
   });
+});
 
-  it('removing a track clears it from the schedule', async () => {
-    await seed(radio, [track('t1', 'Leitmotif', 281)]);
-    const lobby = radio.getStations().find((s) => s.name === 'Lobby')!;
-    radio.mutateStation(lobby.id, (s) => ({
-      ...s,
-      programs: s.programs.map((p) => (p.name === 'Leitmotif' ? { ...p, trackIds: ['t1'] } : p)),
-    }));
-    await radio.removeTrack('t1');
+describe('Catalog', () => {
+  afterEach(() => vi.unstubAllGlobals());
 
-    const after = radio.getStations().find((s) => s.name === 'Lobby')!;
-    expect(after.programs.every((p) => p.trackIds.length === 0)).toBe(true);
-    expect(radio.library.get('t1')).toBeUndefined();
+  it('points at files under the site root, escaped for the URL', () => {
+    const catalog = new Catalog([
+      { id: 'a', name: 'A', duration: 10, src: 'music/Some Album (Live)/01 -7-12am- A.flac' },
+    ]);
+    expect(catalog.urlFor('a')).toBe('/music/Some%20Album%20(Live)/01%20-7-12am-%20A.flac');
+    expect(catalog.urlFor('nope')).toBeNull();
+  });
+
+  it('reports which files the host is missing', async () => {
+    const catalog = new Catalog([
+      { id: 'a', name: 'A', duration: 10, src: 'music/a.flac' },
+      { id: 'b', name: 'B', duration: 10, src: 'music/b.flac' },
+    ]);
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => ({ ok: !url.endsWith('b.flac') })));
+
+    await catalog.checkAvailability();
+    expect(catalog.statusOf('a')).toBe('present');
+    expect(catalog.statusOf('b')).toBe('missing');
+    expect(catalog.missingCount).toBe(1);
+  });
+
+  it('ships a duration for every track so the schedule is right before anything loads', () => {
+    expect(new Catalog().list().every((t) => t.duration > 0)).toBe(true);
   });
 });
 
@@ -179,38 +170,39 @@ describe('RadioUI', () => {
     vi.unstubAllGlobals();
   });
 
-  it('mounts and shows what is on air', async () => {
+  async function mount() {
     const root = document.createElement('div');
     document.body.append(root);
     const radio = new Radio();
     new RadioUI(radio, root).mount();
     await radio.init();
+    return { root, radio };
+  }
 
-    await seed(radio, [track('t1', 'Leitmotif', 281)]);
-    const lobby = radio.getStations().find((s) => s.name === 'Lobby')!;
-    radio.mutateStation(lobby.id, (s) => ({
-      ...s,
-      programs: s.programs.map((p) => (p.name === 'Leitmotif' ? { ...p, trackIds: ['t1'] } : p)),
-    }));
+  it('mounts and shows what is on air', async () => {
+    const { root, radio } = await mount();
+    const lobby = radio.getStations().find((s) => s.name === STATION)!;
     radio.setChannel(lobby.channel);
 
     expect(root.querySelector('.channel-number')!.textContent).toBe(String(lobby.channel));
-    expect(root.querySelector('.station-name')!.textContent).toBe('Lobby');
-    expect(root.querySelector('.track')!.textContent).toBe('Leitmotif');
+    expect(root.querySelector('.station-name')!.textContent).toBe(STATION);
+    expect(root.querySelector('.track')!.textContent).toBe(DAYPART);
     expect(root.querySelector('.position')!.textContent).toContain('looping');
     expect(root.querySelectorAll('.tab')).toHaveLength(3);
   });
 
   it('lists every daypart on the schedule tab', async () => {
-    const root = document.createElement('div');
-    document.body.append(root);
-    const radio = new Radio();
-    new RadioUI(radio, root).mount();
-    await radio.init();
-
+    const { root } = await mount();
     root.querySelectorAll<HTMLButtonElement>('.tab')[1]!.click();
     expect(root.querySelectorAll('.station')).toHaveLength(8);
     // 24 dayparts across the seven albums, plus the empty eighth channel.
     expect(root.querySelectorAll('.program')).toHaveLength(25);
+  });
+
+  it('lists the files the host has to provide', async () => {
+    const { root } = await mount();
+    root.querySelectorAll<HTMLButtonElement>('.tab')[2]!.click();
+    await vi.waitFor(() => expect(root.querySelectorAll('.track-row').length).toBe(24));
+    expect(root.querySelector('.path')!.textContent).toMatch(/^music\//);
   });
 });

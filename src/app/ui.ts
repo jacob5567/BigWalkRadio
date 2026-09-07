@@ -1,12 +1,11 @@
 import { formatDayHour } from '../core/clock';
-import { storageEstimate } from '../core/db';
 import { formatTimeOfDay } from '../core/naming';
 import type { Radio, RadioState } from '../core/radio';
 import { programWindow } from '../core/schedule';
 import type { Track } from '../core/types';
 import { clear, el, humanSpan, mmss } from './dom';
 
-type Pane = 'radio' | 'schedule' | 'library';
+type Pane = 'radio' | 'schedule' | 'sources';
 
 export class RadioUI {
   private readonly panes = new Map<Pane, HTMLElement>();
@@ -36,13 +35,13 @@ export class RadioUI {
   private readonly dayMinutes = el('input', { class: 'num', type: 'number', min: '1', max: '1440', step: '1' });
   private readonly compress = el('input', { type: 'checkbox' });
   private readonly blendSeconds = el('input', { class: 'num', type: 'number', min: '0', max: '120', step: '1' });
-  private readonly importNote = el('div', { class: 'note' });
+  private readonly sourcesNote = el('div', { class: 'note' });
 
   constructor(private readonly radio: Radio, private readonly root: HTMLElement) {}
 
   mount(): void {
     const tabs = el('nav', { class: 'tabs' },
-      ...(['radio', 'schedule', 'library'] as Pane[]).map((name) =>
+      ...(['radio', 'schedule', 'sources'] as Pane[]).map((name) =>
         el('button', {
           type: 'button',
           class: 'tab',
@@ -54,7 +53,7 @@ export class RadioUI {
 
     this.panes.set('radio', this.buildRadioPane());
     this.panes.set('schedule', el('section', { class: 'pane' }));
-    this.panes.set('library', this.buildLibraryPane());
+    this.panes.set('sources', this.buildSourcesPane());
 
     clear(this.root);
     this.root.append(tabs, ...this.panes.values());
@@ -69,7 +68,7 @@ export class RadioUI {
       tab.classList.toggle('active', tab.dataset.pane === pane);
     }
     if (pane === 'schedule') this.renderSchedule();
-    if (pane === 'library') this.renderLibrary();
+    if (pane === 'sources') void this.renderSources();
   }
 
   // --- radio ----------------------------------------------------------------
@@ -174,7 +173,7 @@ export class RadioUI {
   private renderSchedule(): void {
     const pane = this.panes.get('schedule')!;
     const state = this.radio.snapshot();
-    const tracks = this.radio.library.list();
+    const tracks = this.radio.catalog.list();
     clear(pane);
 
     pane.append(el('p', { class: 'note' },
@@ -183,7 +182,7 @@ export class RadioUI {
     for (const station of this.radio.getStations()) {
       const rows = station.programs.map((program, index) => {
         const assigned = program.trackIds[0] ?? '';
-        const track = assigned ? this.radio.library.get(assigned) : undefined;
+        const track = assigned ? this.radio.catalog.get(assigned) : undefined;
         const windowMs = programWindow(station, index) * state.reading.dayLengthMs;
 
         const picker = el('select', {
@@ -196,7 +195,8 @@ export class RadioUI {
             this.renderSchedule();
           },
         }, el('option', { value: '' }, '— empty —'),
-          ...tracks.map((t) => el('option', { value: t.id, selected: t.id === assigned }, t.name)));
+          ...tracks.map((t: Track) =>
+            el('option', { value: t.id, selected: t.id === assigned }, `${t.album ? `${t.album} · ` : ''}${t.name}`)));
 
         return el('div', { class: 'program' },
           el('div', { class: 'time' }, formatTimeOfDay(program.startHour * 60)),
@@ -217,75 +217,62 @@ export class RadioUI {
     }
   }
 
-  // --- library --------------------------------------------------------------
+  // --- sources -------------------------------------------------------------
 
-  private buildLibraryPane(): HTMLElement {
-    const files = el('input', { type: 'file', accept: 'audio/*', multiple: true });
-    files.addEventListener('change', () => void this.handleFiles(files));
-
-    const folder = el('input', { type: 'file', accept: 'audio/*', multiple: true });
-    folder.setAttribute('webkitdirectory', '');
-    folder.addEventListener('change', () => void this.handleFiles(folder));
-
+  private buildSourcesPane(): HTMLElement {
     return el('section', { class: 'pane' },
       el('p', { class: 'note' },
-        'Import your own audio. Files named like the soundtrack (“…-7-12am- Leitmotif”) ' +
-        'are filed into their station and time automatically; anything else you place by hand in Schedule.'),
-      el('label', { class: 'file' }, 'Add files', files),
-      el('label', { class: 'file' }, 'Add a folder (desktop)', folder),
-      this.importNote,
+        'The radio plays files served alongside it. Put the soundtrack at ' +
+        '“music/” next to index.html, in the folder layout it ships with — ' +
+        'nothing is uploaded or copied.'),
+      el('div', { class: 'row' },
+        el('button', { type: 'button', onclick: () => void this.renderSources(true) }, 'Check files'),
+      ),
+      this.sourcesNote,
       el('div', { class: 'track-list' }),
     );
   }
 
-  private async handleFiles(input: HTMLInputElement): Promise<void> {
-    const chosen = [...(input.files ?? [])];
-    if (chosen.length === 0) return;
-    this.importNote.textContent = `Reading ${chosen.length} file${chosen.length === 1 ? '' : 's'}…`;
-    const summary = await this.radio.importFiles(chosen);
-    input.value = '';
-
-    const parts = [`${summary.placed.length} filed into the schedule`];
-    if (summary.unplaced.length) parts.push(`${summary.unplaced.length} need placing by hand`);
-    if (summary.failed.length) parts.push(`${summary.failed.length} could not be read`);
-    this.importNote.textContent = parts.join(' · ');
-    this.renderLibrary();
-  }
-
-  private renderLibrary(): void {
-    const pane = this.panes.get('library')!;
+  private async renderSources(check = false): Promise<void> {
+    const pane = this.panes.get('sources')!;
     const list = pane.querySelector('.track-list');
     if (!list) return;
-    clear(list);
 
-    const tracks = this.radio.library.list();
-    if (tracks.length === 0) {
-      list.append(el('p', { class: 'note' }, 'Nothing imported yet.'));
+    const catalog = this.radio.catalog;
+    if (check) {
+      this.sourcesNote.textContent = 'Checking…';
+      await catalog.checkAvailability();
     }
+
+    const tracks = catalog.list();
+    const missing = catalog.missingCount;
+    this.sourcesNote.textContent = check
+      ? (missing === 0
+        ? `All ${tracks.length} files found.`
+        : `${missing} of ${tracks.length} files missing — the dial will be silent on those dayparts.`)
+      : `${tracks.length} files expected. Check to confirm the host has them in place.`;
+
+    clear(list);
+    let album: string | null | undefined;
     for (const track of tracks) {
+      if (track.album !== album) {
+        album = track.album;
+        list.append(el('h2', { class: 'album' }, album ?? 'Unfiled'));
+      }
       list.append(el('div', { class: 'track-row' },
+        el('span', { class: `dot ${catalog.statusOf(track.id)}` }),
         el('div', { class: 'grow' },
           el('div', {}, track.name),
-          el('div', { class: 'note' }, this.describe(track)),
+          el('div', { class: 'note path' }, track.src),
         ),
-        el('button', {
-          type: 'button',
-          onclick: () => void this.radio.removeTrack(track.id).then(() => this.renderLibrary()),
-        }, 'Remove'),
+        el('div', { class: 'note' }, this.describe(track)),
       ));
     }
-
-    void storageEstimate().then((estimate) => {
-      if (!estimate || estimate.quota === 0) return;
-      const mb = (n: number) => `${(n / 1024 / 1024).toFixed(0)} MB`;
-      list.append(el('p', { class: 'note' }, `Using ${mb(estimate.usage)} of ${mb(estimate.quota)} available.`));
-    });
   }
 
   private describe(track: Track): string {
-    const bits = [mmss(track.duration)];
-    if (track.album) bits.push(track.album);
-    if (track.timeOfDayMinutes != null) bits.push(formatTimeOfDay(track.timeOfDayMinutes));
+    const bits = track.timeOfDayMinutes != null ? [formatTimeOfDay(track.timeOfDayMinutes)] : [];
+    bits.push(track.duration > 0 ? mmss(track.duration) : 'no duration');
     return bits.join(' · ');
   }
 }

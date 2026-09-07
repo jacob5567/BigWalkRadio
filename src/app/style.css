@@ -80,6 +80,13 @@ label { display: flex; gap: 8px; align-items: center; font-size: 12px; color: va
 .program-name { font-size: 14px; }
 .program select { width: 100%; margin-top: 6px; }
 
+.album { margin: 14px 0 2px; font-size: 12px; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--line); flex: none; }
+.dot.present { background: var(--amber); }
+.dot.missing { background: #b4472f; }
+.dot.checking { background: var(--dim); }
+.path { word-break: break-all; }
+
 .file {
   display: block; background: var(--panel); border: 1px solid var(--line);
   border-radius: 8px; padding: 12px; color: var(--ink); font-size: 14px;

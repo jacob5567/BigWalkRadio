@@ -1,12 +1,11 @@
 import { AudioEngine, type SyncMode, type VoiceTarget } from './audio';
 import { makeClock, type BroadcastClock, type ClockReading } from './clock';
+import { Catalog } from './catalog';
 import { getKV, setKV } from './db';
 import { DEFAULT_SETTINGS, makeDefaultStations } from './defaults';
-import { Library } from './library';
-import { albumKey } from './naming';
 import { normalizeStation, resolveStationLayers, type AudioLayer } from './schedule';
 import { AUDIBLE_THRESHOLD, DEFAULT_DIAL, readDial, type DialState, type StationSignal } from './tuner';
-import type { ClockMode, DialConfig, Program, Settings, Station, Track } from './types';
+import type { ClockMode, DialConfig, Settings, Station } from './types';
 
 const KEY_SETTINGS = 'settings';
 const KEY_STATIONS = 'stations';
@@ -35,37 +34,8 @@ export interface RadioState {
 
 type Listener = (state: RadioState) => void;
 
-export interface PlacedTrack {
-  track: Track;
-  station: Station;
-  program: Program;
-}
-
-export interface ImportSummary {
-  placed: PlacedTrack[];
-  unplaced: Track[];
-  failed: { name: string; reason: string }[];
-}
-
-/** Minutes of slack allowed when matching a filename's time to a daypart. */
-const SLOT_TOLERANCE_MIN = 1;
-
-function findSlot(
-  stations: Station[],
-  album: string,
-  minutes: number,
-): { station: Station; program: Program } | null {
-  const key = albumKey(album);
-  const station = stations.find((s) => (s.albumKey ?? albumKey(s.name)) === key);
-  if (!station) return null;
-  const program = station.programs.find(
-    (p) => Math.abs(p.startHour * 60 - minutes) <= SLOT_TOLERANCE_MIN,
-  );
-  return program ? { station, program } : null;
-}
-
 export class Radio {
-  readonly library = new Library();
+  readonly catalog = new Catalog();
   readonly engine: AudioEngine;
   readonly dialConfig: DialConfig = DEFAULT_DIAL;
 
@@ -79,12 +49,11 @@ export class Radio {
   private lastMediaKey = '';
 
   constructor() {
-    this.engine = new AudioEngine((trackId) => this.library.urlFor(trackId));
+    this.engine = new AudioEngine((trackId) => this.catalog.urlFor(trackId));
     this.engine.onNeedsUpdate = () => this.tick();
   }
 
   async init(): Promise<void> {
-    await this.library.load();
     const savedSettings = await getKV<Partial<Settings>>(KEY_SETTINGS);
     const savedStations = await getKV<Station[]>(KEY_STATIONS);
     if (savedSettings) this.settings = { ...DEFAULT_SETTINGS, ...savedSettings, powered: false };
@@ -93,6 +62,9 @@ export class Radio {
     this.ready = true;
     this.startTicking();
     this.emit();
+    // Anything the build couldn't measure gets read from the file header, in
+    // the background, so a missing duration doesn't hold up the dial.
+    void this.catalog.probeMissingDurations().then(() => this.tick());
   }
 
   subscribe(fn: Listener): () => void {
@@ -171,47 +143,6 @@ export class Radio {
     this.tick();
   }
 
-  // --- importing ------------------------------------------------------------
-
-  /**
-   * Import audio and file it into the schedule. Tracks whose names carry an
-   * album and a time of day land straight in the matching daypart; anything
-   * else is left in the library for the listener to place by hand.
-   */
-  async importFiles(files: readonly File[]): Promise<ImportSummary> {
-    const imported = await this.library.import(files);
-    const placed: PlacedTrack[] = [];
-    const unplaced: Track[] = [];
-    const stations = this.getStations();
-
-    for (const track of imported.added) {
-      const slot = track.album && track.timeOfDayMinutes != null
-        ? findSlot(stations, track.album, track.timeOfDayMinutes)
-        : null;
-      if (slot) {
-        // Each daypart is a single track on repeat, so a match replaces it.
-        slot.program.trackIds = [track.id];
-        placed.push({ track, station: slot.station, program: slot.program });
-      } else {
-        unplaced.push(track);
-      }
-    }
-
-    if (placed.length > 0) this.updateStations(stations);
-    else this.tick();
-    return { placed, unplaced, failed: imported.failed };
-  }
-
-  async removeTrack(id: string): Promise<void> {
-    await this.library.remove(id);
-    this.updateStations(
-      this.getStations().map((s) => ({
-        ...s,
-        programs: s.programs.map((p) => ({ ...p, trackIds: p.trackIds.filter((t) => t !== id) })),
-      })),
-    );
-  }
-
   // --- station editing ------------------------------------------------------
 
   updateStations(next: Station[]): void {
@@ -235,7 +166,7 @@ export class Radio {
     const dial = readDial(this.stations, this.settings.channel, this.dialConfig);
     const scale = this.timelineScale(reading);
     const stations: StationState[] = dial.signals.map((signal) => {
-      const layers = resolveStationLayers(signal.station, reading, this.library.map, {
+      const layers = resolveStationLayers(signal.station, reading, this.catalog.map, {
         timelineScale: scale,
         blendSeconds: this.settings.blendSeconds,
       });

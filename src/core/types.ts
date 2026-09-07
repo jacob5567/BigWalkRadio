@@ -1,13 +1,16 @@
-/** A single user-supplied audio file, once imported and probed. */
+/**
+ * One audio file the host serves. Nothing is uploaded or stored by the app:
+ * `src` is a path under the site root, served from ./music next to the app.
+ */
 export interface Track {
+  /** The relative path, which doubles as a stable id. */
   id: string;
-  /** Display name; defaults to the filename minus extension. */
+  /** Display name, taken from the filename. */
   name: string;
-  /** Seconds. Probed from the decoded file, never trusted from metadata. */
+  /** Seconds. Baked in at build time, re-probed in the browser if missing. */
   duration: number;
-  mime: string;
-  size: number;
-  addedAt: number;
+  /** Path relative to the site root, unencoded. */
+  src: string;
   /** Album parsed out of the filename, if it named one. */
   album?: string | null;
   /** Time of day parsed out of the filename, in minutes past midnight. */
