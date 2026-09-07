@@ -119,9 +119,9 @@ export class Radio {
     this.tick();
   }
 
-  setFrequency(freq: number): void {
+  setChannel(channel: number): void {
     const { min, max } = this.dialConfig;
-    this.settings.channel = Math.min(max, Math.max(min, freq));
+    this.settings.channel = Math.min(max, Math.max(min, channel));
     this.save();
     this.tick();
   }
@@ -135,7 +135,7 @@ export class Radio {
       ? sorted.filter((s) => s.channel > here + 0.25)
       : sorted.filter((s) => s.channel < here - 0.25).reverse();
     const next = candidates[0] ?? (direction > 0 ? sorted[0]! : sorted[sorted.length - 1]!);
-    this.setFrequency(next.channel);
+    this.setChannel(next.channel);
   }
 
   setVolume(v: number): void {

@@ -82,6 +82,14 @@ export async function setKV(key: string, value: unknown): Promise<void> {
   await done(tx);
 }
 
+/** Release the connection. Used when tearing down, and between tests. */
+export async function closeDb(): Promise<void> {
+  if (!dbPromise) return;
+  const db = await dbPromise.catch(() => null);
+  dbPromise = null;
+  db?.close();
+}
+
 /** Ask the browser not to evict the user's imported audio under storage pressure. */
 export async function requestPersistence(): Promise<boolean> {
   if (!navigator.storage?.persist) return false;
