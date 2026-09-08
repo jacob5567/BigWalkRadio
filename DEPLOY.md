@@ -40,17 +40,24 @@ attach it to the instance:
 
 ### Hardening
 
-SSH in as root, then:
+Do this in two halves, and **prove you can get in between them**. Disabling
+both root login and password login before checking is how people lock
+themselves out; if it happens to you, see [Locked out](#locked-out).
+
+SSH in as root:
 
 ```bash
-adduser --disabled-password --gecos "" jacob
+# adduser prompts for a password. Set one: sudo asks for it later, so an
+# account created with --disabled-password cannot sudo at all.
+adduser jacob
 usermod -aG sudo jacob
-rsync --archive --chown=jacob:jacob ~/.ssh /home/jacob/
 
-# Key-only login.
-sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
-sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
-systemctl restart ssh
+# Hand over the key you gave the Linode at creation, if you gave it one.
+mkdir -p /home/jacob/.ssh
+cp /root/.ssh/authorized_keys /home/jacob/.ssh/authorized_keys 2>/dev/null || true
+chown -R jacob:jacob /home/jacob/.ssh
+chmod 700 /home/jacob/.ssh
+chmod 600 /home/jacob/.ssh/authorized_keys 2>/dev/null || true
 
 apt update && apt upgrade -y
 apt install -y nginx unattended-upgrades fail2ban
@@ -58,8 +65,74 @@ systemctl enable --now fail2ban
 dpkg-reconfigure -plow unattended-upgrades   # answer Yes
 ```
 
-**Open a second terminal and confirm `ssh jacob@<ip>` works before closing the
-first one.** Everything below runs as `jacob`.
+Now, **from your own machine, leaving the root session open**:
+
+```bash
+ssh-copy-id jacob@<ip>   # only needed if the cp above found nothing
+ssh jacob@<ip>
+sudo -v                  # must succeed before you go on
+```
+
+Only once both of those work, shut the doors:
+
+```bash
+# Ubuntu 24.04 reads this directory BEFORE /etc/ssh/sshd_config, and the
+# first value of a setting wins -- so editing sshd_config alone can silently
+# do nothing against a cloud-init drop-in. A file that sorts first wins.
+printf 'PasswordAuthentication no\nPermitRootLogin no\nKbdInteractiveAuthentication no\n' \
+  | sudo tee /etc/ssh/sshd_config.d/00-hardening.conf
+sudo sshd -t && sudo systemctl restart ssh
+
+# The effective config, includes and all. This is the check that counts.
+sudo sshd -T | grep -Ei 'passwordauthentication|permitrootlogin'
+```
+
+Open one more fresh terminal and confirm `ssh jacob@<ip>` still works before
+closing anything. Everything below runs as `jacob`.
+
+### Locked out
+
+Linode's **Lish** console (Linode dashboard → your instance → Launch LISH
+Console) logs in with the root password and is not affected by any of the SSH
+settings above. From there:
+
+```bash
+passwd jacob                 # in case the account has no password
+printf 'PasswordAuthentication yes\nPermitRootLogin prohibit-password\n' \
+  > /etc/ssh/sshd_config.d/00-recovery.conf
+sshd -t && systemctl restart ssh
+```
+
+Get in with `ssh-copy-id jacob@<ip>`, check `sudo -v`, then delete
+`00-recovery.conf` and redo the hardening step above.
+
+**If it says `Connection refused` rather than asking for anything**, sshd is
+not listening at all -- a rejected config leaves `systemctl restart` with the
+old daemon stopped and no new one started. In Lish:
+
+```bash
+ss -ltnp | grep -w 22 || echo 'nothing listening on 22'
+sshd -t                       # silent means the config parses
+systemctl status ssh ssh.socket --no-pager -l | head -30
+journalctl -u ssh -n 30 --no-pager
+```
+
+`sshd -t` names the file and line if a drop-in is malformed. Clear the ones
+this guide added, put back a known-good one, and start it:
+
+```bash
+rm -f /etc/ssh/sshd_config.d/00-hardening.conf /etc/ssh/sshd_config.d/00-recovery.conf
+printf 'PermitRootLogin prohibit-password\nPasswordAuthentication yes\n' \
+  > /etc/ssh/sshd_config.d/00-recovery.conf
+sshd -t && systemctl restart ssh
+systemctl start ssh.socket 2>/dev/null   # 24.04 socket-activates sshd
+ss -ltnp | grep -w 22
+```
+
+A `Connection refused` is something answering with a refusal, so it is almost
+never the Linode Cloud Firewall -- that drops packets, which shows up as a
+timeout instead. Check `ufw status verbose` all the same, and `ufw allow
+OpenSSH` if it is active without a rule for it.
 
 ### The directory layout
 
