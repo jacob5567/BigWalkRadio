@@ -4,7 +4,9 @@ A progressive web app that behaves like the radio in Big Walk. Each channel
 plays a track that loops from its time of day until the next one takes over and
 blends in over the top.
 
-No audio ships with this app. The files are served by whoever hosts it.
+No audio ships with this app. Buy the soundtrack from the composer at
+<https://aksfx.bandcamp.com/> and put the files in place; whoever hosts the app
+serves them.
 
 ## Running it
 
@@ -29,37 +31,46 @@ npm run sim -- --watch       # live
 
 ## Providing the music
 
-Put the soundtrack at `music/` next to `index.html`, in the layout it ships
-with — one folder per album, filenames unchanged:
+Buy the soundtrack from <https://aksfx.bandcamp.com/>. **Choose Ogg Vorbis**
+when Bandcamp asks for a format — see [Seams](#seams) for why it matters here.
+
+Unzip each album into `music/`, next to `index.html`, keeping the folder and
+the filenames exactly as they come:
 
 ```
 index.html
 assets/
 music/
   aksfx - Radio- Lobby (Original Music from Big Walk)/
-    aksfx - Radio- Lobby (Original Music from Big Walk) - 01 -12-00am- Motif.mp3
-    aksfx - Radio- Lobby (Original Music from Big Walk) - 02 -7-12am- Leitmotif.mp3
+    aksfx - Radio- Lobby (Original Music from Big Walk) - 01 -12-00am- Motif.ogg
+    aksfx - Radio- Lobby (Original Music from Big Walk) - 02 -7-12am- Leitmotif.ogg
     ...
 ```
 
 The filenames are the schedule: `-7-12am-` is when that track goes on air, and
-it plays on repeat until the next one starts. An album whose tracks carry no
-times isn't a schedule, so it gets no channel. The app reads its channels from
-`src/core/presets.ts`, which is generated from those filenames.
+it plays on repeat until the next one starts. Don't rename anything. An album
+whose tracks carry no times isn't a schedule, so it gets no channel — which is
+why B-Sides doesn't get one. Tracks have to sit inside an album folder; a file
+loose in `music/` is ignored.
+
+Seven albums make seven channels, and the whole set is about 200 MB as Ogg.
+The app reads its channels from `src/core/presets.ts`, generated from those
+filenames.
 
 Two things the host's server must do:
 
 - **Honour `Range` requests.** The player seeks constantly to stay on the
   broadcast schedule, and cannot without them.
-- **Serve the audio MIME types** (`audio/mpeg` for MP3, and friends).
+- **Serve the audio MIME types** (`audio/ogg` for Ogg, `audio/mpeg` for MP3).
 
 The dev server does both; `dist/` is a static bundle, so anything that serves
 files correctly will do in production.
 
 ### A different set of music
 
-The format doesn't matter as long as the browser can play it — MP3, FLAC,
-Opus, AAC. If the files change, regenerate the dial:
+Any format the browser can play will work — Ogg, MP3, FLAC, Opus, AAC — though
+the loop seams are cleanest with one that doesn't pad. If the files change,
+regenerate the dial:
 
 ```
 npm run presets    # rescans ./music, rewrites src/core/presets.ts
@@ -101,14 +112,19 @@ over a slow connection. A pass through the playlist is therefore one seam
 shorter than the tracks it contains, which keeps the whole thing exact.
 
 The seam is 20 ms by default and adjustable on screen. Formats differ in how
-much they need it:
+much they need it — measured by decoding each back to PCM and counting samples
+against a 4:41 track:
 
-| Format | Padding per loop | Notes |
-| --- | --- | --- |
-| MP3 | ~29 ms | worst case; needs the seam |
-| AAC | ~23 ms | container-dependent |
-| Opus | none | gapless by design, and the smallest |
-| FLAC | none | exact, but roughly 3x the size |
+| Format | Padding per loop | Size | |
+| --- | --- | --- | --- |
+| **Ogg Vorbis** | none | 6.7 MB | **what Bandcamp gives you; use this** |
+| Opus | none | 3.9 MB | smallest, but needs re-encoding |
+| FLAC | none | 27.3 MB | exact, and about 4x the size |
+| MP3 | ~29 ms | 9.3 MB | LAME delay plus tail padding |
+| AAC | ~23 ms | 4.7 MB | container-dependent |
+
+Ogg is the reason 20 ms is enough. With MP3 the seam has ~29 ms of inserted
+silence to cover before it can even start hiding the restart.
 
 Even with a gapless format the overlap is worth keeping, because the restart
 itself isn't sample-accurate. Changing the default only affects a browser that
