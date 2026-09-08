@@ -27,8 +27,8 @@
   --bolt: #9fb0a2;
   --bolt-pin: #2c3a31;
   --button-ink: #12251c;
-  --ground: #c9c2ae;
-  color-scheme: light;
+  --ground: #2c2e2b;
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -39,7 +39,7 @@ button { appearance: none; -webkit-appearance: none; font: inherit; color: inher
 body {
   margin: 0;
   background: var(--ground);
-  color: var(--ink);
+  color: var(--display-ink);
   font: 15px/1.45 Archivo, system-ui, sans-serif;
   padding-bottom: env(safe-area-inset-bottom);
   -webkit-text-size-adjust: 100%;
