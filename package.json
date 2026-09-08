@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test": "TZ=UTC vitest run",
     "test:watch": "TZ=UTC vitest",
-    "icons": "node tools/make-icons.mjs",
+    "maskable": "node tools/make-maskable.mjs",
     "sim": "vite-node tools/simulate.mjs",
     "presets": "vite-node tools/make-presets.mjs"
   },
