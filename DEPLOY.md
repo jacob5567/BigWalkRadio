@@ -61,8 +61,18 @@ chmod 600 /home/jacob/.ssh/authorized_keys 2>/dev/null || true
 
 apt update && apt upgrade -y
 apt install -y nginx unattended-upgrades fail2ban
-systemctl enable --now fail2ban
 dpkg-reconfigure -plow unattended-upgrades   # answer Yes
+
+# Your own address, so a run of failed logins while you set this up cannot
+# lock you out of your own box. Get it with: curl -4 -s ifconfig.me
+cat >/etc/fail2ban/jail.local <<'EOF'
+[DEFAULT]
+ignoreip = 127.0.0.1/8 ::1 YOUR.IP.HERE
+bantime  = 1h
+findtime = 10m
+maxretry = 5
+EOF
+# Left stopped on purpose: start it once key login is proven, at the end.
 ```
 
 Now, **from your own machine, leaving the root session open**:
@@ -88,7 +98,14 @@ sudo sshd -T | grep -Ei 'passwordauthentication|permitrootlogin'
 ```
 
 Open one more fresh terminal and confirm `ssh jacob@<ip>` still works before
-closing anything. Everything below runs as `jacob`.
+closing anything. Then, and only then, start the thing that bans people:
+
+```bash
+sudo systemctl enable --now fail2ban
+sudo fail2ban-client status sshd
+```
+
+Everything below runs as `jacob`.
 
 ### Locked out
 
@@ -106,12 +123,28 @@ sshd -t && systemctl restart ssh
 Get in with `ssh-copy-id jacob@<ip>`, check `sudo -v`, then delete
 `00-recovery.conf` and redo the hardening step above.
 
-**If it says `Connection refused` rather than asking for anything**, sshd is
-not listening at all -- a rejected config leaves `systemctl restart` with the
-old daemon stopped and no new one started. In Lish:
+**If it says `Connection refused`**, work out first whether anything is
+listening, because the same message covers two very different faults:
 
 ```bash
-ss -ltnp | grep -w 22 || echo 'nothing listening on 22'
+ss -ltnp | grep -w 22
+```
+
+*Something is listening on `0.0.0.0:22`* -- then it is fail2ban, which bans by
+rejecting with ICMP port-unreachable, and Linux reports that to the client as
+`Connection refused`. It is your own address that got banned, so port 80 still
+answers and only SSH refuses:
+
+```bash
+fail2ban-client status sshd        # your address is under Banned IP list
+systemctl stop fail2ban            # stand it down until SSH is sorted
+fail2ban-client set sshd unbanip <your ip>   # or just this, to stay protected
+```
+
+*Nothing is listening* -- then sshd is not running. A rejected config leaves
+`systemctl restart` with the old daemon stopped and no new one started:
+
+```bash
 sshd -t                       # silent means the config parses
 systemctl status ssh ssh.socket --no-pager -l | head -30
 journalctl -u ssh -n 30 --no-pager
