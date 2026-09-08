@@ -180,6 +180,47 @@ describe('the switch', () => {
     for (const target of targets) expect(target.gain).toBeCloseTo(Math.SQRT1_2, 3);
   });
 
+  it('gives overlapping copies of one track separate voices', async () => {
+    // Channel 5's 07:12 daypart is a single track on repeat. Arrive halfway
+    // through the seam where one pass gives way to the next.
+    const seam = radio.getSettings().seamSeconds;
+    const leitmotif = radio.catalog.list().find((t) => t.name === 'Leitmotif')!;
+    const stride = leitmotif.duration - seam;
+    const seamMid = Date.parse('2026-03-04T07:12:00Z') + (stride + seam / 2) * 1000;
+
+    vi.setSystemTime(seamMid - SETTLED_MS);
+    await radio.setPosition(5);
+    const update = vi.spyOn(radio.engine, 'update');
+    settle();
+
+    const sounding = update.mock.lastCall![0].filter((t) => t.playing);
+    expect(sounding).toHaveLength(2);
+    // The same file, twice over, at two different points in it.
+    expect(new Set(sounding.map((t) => t.trackId)).size).toBe(1);
+    expect(new Set(sounding.map((t) => t.key)).size).toBe(2);
+    for (const target of sounding) expect(target.gain).toBeCloseTo(Math.SQRT1_2, 2);
+    expect(Math.abs(sounding[0]!.offsetSec - sounding[1]!.offsetSec)).toBeCloseTo(stride, 1);
+  });
+
+  it('cues the next pass silently before the seam arrives', async () => {
+    const seam = radio.getSettings().seamSeconds;
+    const leitmotif = radio.catalog.list().find((t) => t.name === 'Leitmotif')!;
+    const stride = leitmotif.duration - seam;
+    const justBefore = Date.parse('2026-03-04T07:12:00Z') + (stride - 4) * 1000;
+
+    vi.setSystemTime(justBefore - SETTLED_MS);
+    await radio.setPosition(5);
+    const update = vi.spyOn(radio.engine, 'update');
+    settle();
+
+    const targets = update.mock.lastCall![0];
+    const cued = targets.filter((t) => !t.playing);
+    expect(cued).toHaveLength(1);
+    expect(cued[0]!.gain).toBe(0);
+    expect(cued[0]!.offsetSec).toBe(0);
+    expect(targets.filter((t) => t.playing)).toHaveLength(1);
+  });
+
   it('lets the audio hardware sleep once the static from switching off dies away', async () => {
     await radio.setPosition(1);
     settle();

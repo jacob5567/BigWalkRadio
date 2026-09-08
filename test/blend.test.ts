@@ -39,7 +39,7 @@ describe('resolveStationLayers', () => {
 
   it('repeats the track for the whole daypart', () => {
     // 07:12 + 300s is past the 281s track, so it has wrapped to 19s in.
-    const layers = resolveStationLayers(lobby, clock.read(at('2026-03-04T07:17:00Z')), tracks);
+    const layers = resolveStationLayers(lobby, clock.read(at('2026-03-04T07:17:00Z')), tracks, { seamSeconds: 0 });
     expect(layers[0]!.track.id).toBe('leitmotif');
     expect(layers[0]!.offsetSec).toBeCloseTo(19, 3);
   });
@@ -66,7 +66,7 @@ describe('resolveStationLayers', () => {
   });
 
   it('lets the outgoing daypart keep its own position while it fades', () => {
-    const layers = resolveStationLayers(lobby, clock.read(at('2026-03-04T07:12:04Z')), tracks);
+    const layers = resolveStationLayers(lobby, clock.read(at('2026-03-04T07:12:04Z')), tracks, { seamSeconds: 0 });
     const outgoing = layers.find((l) => l.role === 'outgoing')!;
     // Motif ran from 00:00, so it is 4s past a whole number of 270s loops.
     const elapsed = 7 * 3600 + 12 * 60 + 4;

@@ -61,30 +61,47 @@ export class FakeAudioContext {
   close = vi.fn(async () => {});
 }
 
+/** Every media element built since the stubs were installed, in order. */
+export const createdAudio: HTMLAudioElement[] = [];
+
 /**
  * jsdom has no audio pipeline, so stand in for the parts the engine touches.
  * Media elements get a settable currentTime and a readyState that reports ready.
  */
 export function installBrowserStubs(): void {
   vi.stubGlobal('AudioContext', FakeAudioContext);
+  // The engine's elements are never put in the document, so keep a register of
+  // them; tests have no other way to reach them.
+  createdAudio.length = 0;
+  vi.stubGlobal('Audio', function Audio(src?: string) {
+    const element = document.createElement('audio');
+    if (src) element.setAttribute('src', src);
+    createdAudio.push(element);
+    return element;
+  } as unknown as typeof window.Audio);
   vi.stubGlobal('MediaMetadata', class { constructor(public init: unknown) {} });
 
   const proto = window.HTMLMediaElement.prototype;
   proto.play = vi.fn(async function (this: HTMLMediaElement) {
     Object.defineProperty(this, 'paused', { value: false, configurable: true });
   });
-  proto.pause = vi.fn();
+  proto.pause = vi.fn(function (this: HTMLMediaElement) {
+    Object.defineProperty(this, 'paused', { value: true, configurable: true });
+  });
   proto.load = vi.fn();
   Object.defineProperty(proto, 'readyState', { value: 4, configurable: true });
   Object.defineProperty(proto, 'duration', { value: 300, configurable: true });
   Object.defineProperty(proto, 'seeking', { value: false, configurable: true });
 
-  let currentTime = 0;
+  // Per element, so two copies of one track can sit at different points.
+  const positions = new WeakMap<HTMLMediaElement, number>();
   Object.defineProperty(proto, 'currentTime', {
     configurable: true,
-    get: () => currentTime,
-    set: (value: number) => {
-      currentTime = value;
+    get(this: HTMLMediaElement) {
+      return positions.get(this) ?? 0;
+    },
+    set(this: HTMLMediaElement, value: number) {
+      positions.set(this, value);
     },
   });
 

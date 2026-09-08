@@ -8,8 +8,11 @@ import { DEFAULT_TUNE, OFF, nextPosition, readTuning, type TuneConfig, type Tune
 import type { ClockMode, Settings, Station } from './types';
 
 const KEY_SETTINGS = 'settings';
-/** Two at most: a daypart and the one it is taking over from. */
-const MAX_VOICES = 2;
+/**
+ * At most four: the track that's up, the one it's overlapping at a seam, the
+ * one cued for the next seam, and an outgoing daypart still fading away.
+ */
+const MAX_VOICES = 4;
 const TICK_MS = 250;
 
 export interface OnAir {
@@ -159,6 +162,12 @@ export class Radio {
     this.tick();
   }
 
+  setSeamSeconds(seconds: number): void {
+    this.settings.seamSeconds = Math.min(5, Math.max(0, seconds));
+    this.save();
+    this.tick();
+  }
+
   setBlendSeconds(seconds: number): void {
     this.settings.blendSeconds = Math.min(120, Math.max(0, seconds));
     this.save();
@@ -187,6 +196,7 @@ export class Radio {
       const layers = resolveStationLayers(station, reading, this.catalog.map, {
         timelineScale: this.timelineScale(reading),
         blendSeconds: this.settings.blendSeconds,
+        seamSeconds: this.settings.seamSeconds,
       });
       onAir = { station, layers, playing: layers.find((l) => l.role === 'current') ?? layers[0] ?? null };
     }
@@ -211,15 +221,19 @@ export class Radio {
       const sync: SyncMode = this.timelineScale(state.reading) === 1 ? 'lock' : 'free';
       const targets: VoiceTarget[] = (state.onAir?.layers ?? [])
         .map((layer) => ({
-          key: `${state.onAir!.station.id}::${layer.instance.program.id}`,
+          // Overlapping copies of one track need to be told apart, so the pass
+          // and the place in the playlist are part of the identity.
+          key: `${state.onAir!.station.id}::${layer.instance.program.id}::${layer.pass}::${layer.trackIndex}`,
           stationId: state.onAir!.station.id,
           trackId: layer.track.id,
           offsetSec: layer.offsetSec,
           gain: state.tune.stationGain * layer.blend,
-          loop: layer.loops,
+          playing: layer.playing,
           sync,
         }))
-        .sort((a, b) => b.gain - a.gain)
+        // Anything cued but silent goes last, so it is dropped first if the
+        // cap bites.
+        .sort((a, b) => Number(b.playing) - Number(a.playing) || b.gain - a.gain)
         .slice(0, MAX_VOICES);
 
       this.engine.update(targets);

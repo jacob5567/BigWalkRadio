@@ -86,6 +86,34 @@ Where two dayparts meet, the outgoing track keeps playing and fades under the
 incoming one on an equal-power crossfade. The blend length is adjustable on
 screen.
 
+### Seams
+
+A track repeating for hours has to come round without a gap, and simply
+restarting it leaves one: media elements don't restart sample-accurately, and
+lossy formats pad both ends of the file. MP3 is the worst of these — LAME
+writes about 25 ms of encoder delay plus tail padding, which a decoder that
+ignores the header plays as silence at every loop.
+
+So a track never restarts. Where one gives way to the next — including where it
+gives way to itself — the two overlap on a short equal-power crossfade, and the
+next one is fetched and cued several seconds early so it can come in on time
+over a slow connection. A pass through the playlist is therefore one seam
+shorter than the tracks it contains, which keeps the whole thing exact.
+
+The seam is 150 ms by default and adjustable on screen. Formats differ in how
+much they need it:
+
+| Format | Padding per loop | Notes |
+| --- | --- | --- |
+| MP3 | ~29 ms | worst case; needs the seam |
+| AAC | ~23 ms | container-dependent |
+| Opus | none | gapless by design, and the smallest |
+| FLAC | none | exact, but roughly 3x the size |
+
+Even with a gapless format the overlap is worth keeping, because the restart
+itself isn't sample-accurate — but it can be turned down or off once you've
+listened.
+
 ## The controls
 
 There are four ways in:

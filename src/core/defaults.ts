@@ -1,4 +1,4 @@
-import { DEFAULT_BLEND_SECONDS } from './schedule';
+import { DEFAULT_BLEND_SECONDS, DEFAULT_SEAM_SECONDS } from './schedule';
 import { STATION_PRESETS } from './presets';
 import type { Settings, Station } from './types';
 
@@ -9,6 +9,7 @@ export const DEFAULT_SETTINGS: Settings = {
   volume: 0.8,
   lastChannel: 1,
   blendSeconds: DEFAULT_BLEND_SECONDS,
+  seamSeconds: DEFAULT_SEAM_SECONDS,
 };
 
 /**

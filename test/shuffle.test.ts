@@ -6,6 +6,9 @@ import type { Program, Station, Track } from '../src/core/types';
 const at = (iso: string) => Date.parse(iso);
 const clock = new RealTimeClock();
 
+/** These check the shuffle order, so the seam overlap is off. */
+const NO_SEAM = { seamSeconds: 0 };
+
 const track = (id: string, duration: number): Track => ({
   id, name: id, duration, src: `music/${id}.mp3`,
 });
@@ -66,7 +69,7 @@ describe('orderForPass', () => {
 
 describe('a shuffled channel', () => {
   it('plays without looping a single track', () => {
-    const point = resolvePlayback(bsides, clock.read(at('2026-03-04T10:00:00Z')), tracks)!;
+    const point = resolvePlayback(bsides, clock.read(at('2026-03-04T10:00:00Z')), tracks, NO_SEAM)!;
     expect(point.loops).toBe(false);
     expect(point.cycleSec).toBe(1521 + 243 + 189 + 180);
   });
@@ -81,8 +84,8 @@ describe('a shuffled channel', () => {
 
   it('advances in real time like any other channel', () => {
     const t = at('2026-03-04T13:37:11Z');
-    const a = resolvePlayback(bsides, clock.read(t), tracks)!;
-    const b = resolvePlayback(bsides, clock.read(t + 1000), tracks)!;
+    const a = resolvePlayback(bsides, clock.read(t), tracks, NO_SEAM)!;
+    const b = resolvePlayback(bsides, clock.read(t + 1000), tracks, NO_SEAM)!;
     if (b.track.id === a.track.id) expect(b.offsetSec - a.offsetSec).toBeCloseTo(1, 6);
   });
 
@@ -91,7 +94,7 @@ describe('a shuffled channel', () => {
     const sequence: string[] = [];
     // The playlist runs about 35 minutes, so sample across a full day.
     for (let minute = 0; minute < 1440; minute += 3) {
-      const point = resolvePlayback(bsides, clock.read(at('2026-03-04T00:00:00Z') + minute * 60_000), tracks)!;
+      const point = resolvePlayback(bsides, clock.read(at('2026-03-04T00:00:00Z') + minute * 60_000), tracks, NO_SEAM)!;
       heard.add(point.track.id);
       if (sequence.at(-1) !== point.track.id) sequence.push(point.track.id);
     }

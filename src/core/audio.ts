@@ -8,8 +8,11 @@ export interface VoiceTarget {
   /** Where the schedule says this track should be, in seconds. */
   offsetSec: number;
   gain: number;
-  /** Single-track dayparts repeat seamlessly instead of being re-seeked. */
-  loop: boolean;
+  /**
+   * False for a stream that is only being got ready: it is loaded and cued at
+   * `offsetSec`, but held paused until its moment comes.
+   */
+  playing: boolean;
   /**
    * 'lock' keeps the element pinned to the schedule (real time).
    * 'free' seeks only when the track changes, then lets it run at 1x — used
@@ -26,6 +29,7 @@ interface Voice {
   /** Generation counter so a slow async src load can't clobber a newer one. */
   epoch: number;
   releasing: boolean;
+  started: boolean;
 }
 
 /** Seconds of drift tolerated before we hard-seek back onto the schedule. */
@@ -110,24 +114,36 @@ export class AudioEngine {
     if (!ctx) return;
     const voice = this.ensureVoice(target.key);
     voice.releasing = false;
-    voice.el.loop = target.loop;
 
     voice.gain.gain.setTargetAtTime(target.gain, ctx.currentTime, RAMP);
 
     if (voice.trackId !== target.trackId) {
       voice.epoch++;
       voice.trackId = target.trackId;
+      voice.started = false;
       const url = this.resolveUrl(target.trackId);
       if (!url) return;
       voice.el.src = url;
       voice.el.load();
       this.failed.delete(target.trackId);
       this.seek(voice, target.offsetSec);
-      void voice.el.play().catch(() => {});
+    }
+
+    if (!target.playing) {
+      // Cued and waiting: loaded, sitting at the right spot, making no sound.
+      if (!voice.el.paused) voice.el.pause();
+      if (!voice.started) this.seek(voice, target.offsetSec);
       return;
     }
 
-    if (voice.el.paused && this.running) void voice.el.play().catch(() => {});
+    if (!voice.started || voice.el.paused) {
+      // Starting for real, so put it exactly where the schedule wants it.
+      if (!voice.started) this.seek(voice, target.offsetSec);
+      voice.started = true;
+      if (this.running) void voice.el.play().catch(() => {});
+      return;
+    }
+
     if (target.sync === 'lock' && voice.el.readyState >= 1 && !voice.el.seeking) {
       if (Math.abs(voice.el.currentTime - target.offsetSec) > DRIFT_TOLERANCE) {
         this.seek(voice, target.offsetSec);
@@ -171,7 +187,7 @@ export class AudioEngine {
     source.connect(gain);
     gain.connect(this.master!);
 
-    const voice: Voice = { el, source, gain, trackId: null, epoch: 0, releasing: false };
+    const voice: Voice = { el, source, gain, trackId: null, epoch: 0, releasing: false, started: false };
     this.voices.set(key, voice);
     return voice;
   }

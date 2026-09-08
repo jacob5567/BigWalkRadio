@@ -16,21 +16,28 @@ export interface PlaybackPoint {
   instance: ProgramInstance;
   track: Track;
   trackIndex: number;
+  /** Which time through the playlist this is. Repeats get their own number. */
+  pass: number;
   /** Seconds into the track that should be audible right now. */
   offsetSec: number;
-  /** Real epoch ms at which this track gives way to the next one. */
+  /** Real epoch ms at which the next track starts. */
   trackEndsAtMs: number;
-  /** Total playlist length in broadcast seconds. */
+  /** Playlist length in broadcast seconds, counting the seam overlaps. */
   cycleSec: number;
-  /** True when the program is a single track on repeat, so it can loop seamlessly. */
+  /** True when the program is a single track repeating. */
   loops: boolean;
 }
 
-/** One audible stream from a station. Two overlap while programs hand over. */
+/** One audible stream from a station. Several overlap across a seam. */
 export interface AudioLayer extends PlaybackPoint {
   role: 'current' | 'outgoing';
-  /** Equal-power crossfade gain, 0..1. */
+  /** Final gain, 0..1: the daypart crossfade and the seam crossfade combined. */
   blend: number;
+  /**
+   * False while a stream is only being got ready. The next track is loaded and
+   * cued a few seconds early so it can start on time over a slow connection.
+   */
+  playing: boolean;
 }
 
 /** Returns a copy with programs sorted by start hour and hours clamped to [0,24). */
@@ -173,6 +180,17 @@ export function programTracks(program: Program, tracks: ReadonlyMap<string, Trac
   return out;
 }
 
+/**
+ * How long two tracks overlap where one gives way to the next, including where
+ * a track gives way to itself. Repeating a track by restarting it leaves an
+ * audible gap: media elements don't restart sample-accurately, and lossy
+ * formats pad both ends of the file. Overlapping the seam hides both.
+ */
+export const DEFAULT_SEAM_SECONDS = 0.15;
+
+/** How far ahead the next track is fetched and cued. */
+const LEAD_SECONDS = 8;
+
 export interface ResolveOptions {
   /**
    * Broadcast seconds per real second for the *track* timeline.
@@ -182,6 +200,65 @@ export interface ResolveOptions {
   timelineScale?: number;
   /** Real seconds of overlap when one program hands over to the next. */
   blendSeconds?: number;
+  /** Broadcast seconds of overlap where one track gives way to the next. */
+  seamSeconds?: number;
+}
+
+/**
+ * A track's stride: how long from its start to the next track's start. One
+ * seam shorter than the track itself, because the two overlap.
+ */
+function strideOf(track: Track, seamSec: number): number {
+  return Math.max(0.05, track.duration - seamSec);
+}
+
+interface Placement {
+  order: Track[];
+  trackIndex: number;
+  offsetSec: number;
+  pass: number;
+  cycleSec: number;
+  strideSec: number;
+}
+
+/** Where an airing's playlist has got to, `elapsedSec` in. */
+function placeInPlaylist(
+  program: Program,
+  list: readonly Track[],
+  elapsedSec: number,
+  seamSec: number,
+): Placement | null {
+  // Strides sum the same whatever the order, so the pass is stable even when
+  // the playlist is shuffled into a different order each time through.
+  const cycleSec = list.reduce((sum, t) => sum + strideOf(t, seamSec), 0);
+  if (cycleSec <= 0) return null;
+
+  const pass = Math.floor(elapsedSec / cycleSec);
+  let pos = elapsedSec - pass * cycleSec;
+  if (pos < 0) pos += cycleSec;
+
+  const order = orderForPass(program, list, pass);
+  let trackIndex = 0;
+  let cumulative = 0;
+  for (; trackIndex < order.length; trackIndex++) {
+    const stride = strideOf(order[trackIndex]!, seamSec);
+    if (pos < cumulative + stride) break;
+    cumulative += stride;
+  }
+  // Guard against float drift landing exactly on the cycle boundary.
+  if (trackIndex >= order.length) {
+    trackIndex = order.length - 1;
+    cumulative = cycleSec - strideOf(order[trackIndex]!, seamSec);
+  }
+
+  return {
+    order,
+    trackIndex,
+    offsetSec: pos - cumulative,
+    pass,
+    cycleSec,
+    strideSec: strideOf(order[trackIndex]!, seamSec),
+  };
 }
 
 /** Where a specific airing has got to at `reading.nowMs`. */
@@ -191,48 +268,54 @@ export function playbackForInstance(
   reading: ClockReading,
   tracks: ReadonlyMap<string, Track>,
   timelineScale = 1,
+  seamSeconds = 0,
 ): PlaybackPoint | null {
   const list = programTracks(instance.program, tracks);
   if (list.length === 0) return null;
 
-  const cycleSec = list.reduce((sum, t) => sum + t.duration, 0);
-  if (cycleSec <= 0) return null;
-
+  const seamSec = clampSeam(seamSeconds, list);
   const elapsedSec = ((reading.nowMs - instance.startMs) / 1000) * timelineScale;
-  const pass = Math.floor(elapsedSec / cycleSec);
-  let pos = elapsedSec - pass * cycleSec;
-  if (pos < 0) pos += cycleSec;
+  const placed = placeInPlaylist(instance.program, list, elapsedSec, seamSec);
+  if (!placed) return null;
 
-  const ordered = orderForPass(instance.program, list, pass);
-  let trackIndex = 0;
-  for (const track of ordered) {
-    if (pos < track.duration) break;
-    pos -= track.duration;
-    trackIndex++;
-  }
-  // Guard against float drift landing exactly on the cycle boundary.
-  if (trackIndex >= ordered.length) {
-    trackIndex = ordered.length - 1;
-    pos = ordered[trackIndex]!.duration;
-  }
+  return point(station, instance, placed, placed.trackIndex, placed.offsetSec, placed.pass, reading, timelineScale, list.length === 1);
+}
 
-  const track = ordered[trackIndex]!;
-  const remainingRealMs = ((track.duration - pos) / timelineScale) * 1000;
+/** A seam can never eat more than half of the shortest track in the playlist. */
+function clampSeam(seamSeconds: number, list: readonly Track[]): number {
+  const shortest = list.reduce((min, t) => Math.min(min, t.duration), Infinity);
+  return Math.max(0, Math.min(seamSeconds, shortest / 2));
+}
+
+function point(
+  station: Station,
+  instance: ProgramInstance,
+  placed: Placement,
+  trackIndex: number,
+  offsetSec: number,
+  pass: number,
+  reading: ClockReading,
+  timelineScale: number,
+  loops: boolean,
+): PlaybackPoint {
+  const track = placed.order[trackIndex]!;
+  const remainingRealMs = ((placed.strideSec - placed.offsetSec) / timelineScale) * 1000;
   return {
     station,
     instance,
     track,
     trackIndex,
-    offsetSec: pos,
+    pass,
+    offsetSec,
     trackEndsAtMs: reading.nowMs + remainingRealMs,
-    cycleSec,
-    loops: list.length === 1,
+    cycleSec: placed.cycleSec,
+    loops,
   };
 }
 
 /**
- * What a station is playing at `reading.nowMs`, as a pure function of the clock.
- * Returns null for dead air (no program, or no playable tracks in it).
+ * What a station is playing at `reading.nowMs`, as a pure function of the
+ * clock. Returns null for dead air (no programme, or nothing playable in it).
  */
 export function resolvePlayback(
   station: Station,
@@ -242,16 +325,106 @@ export function resolvePlayback(
 ): PlaybackPoint | null {
   const instance = resolveProgram(station, reading);
   if (!instance) return null;
-  return playbackForInstance(station, instance, reading, tracks, options.timelineScale ?? 1);
+  return playbackForInstance(
+    station,
+    instance,
+    reading,
+    tracks,
+    options.timelineScale ?? 1,
+    options.seamSeconds ?? DEFAULT_SEAM_SECONDS,
+  );
 }
 
 export const DEFAULT_BLEND_SECONDS = 8;
 
 /**
- * Everything a station has on air right now: the current program, plus the
- * outgoing one still fading out if we're inside a handover. Each program's
- * track loops from its own start time until the next program takes over, and
- * the two overlap on an equal-power crossfade rather than cutting.
+ * What one airing has on air: the track that is up, the one it is still
+ * overlapping at a seam, and the one being cued ready for the next seam.
+ */
+function layersForInstance(
+  station: Station,
+  instance: ProgramInstance,
+  reading: ClockReading,
+  tracks: ReadonlyMap<string, Track>,
+  options: ResolveOptions,
+  role: 'current' | 'outgoing',
+  dayBlend: number,
+): AudioLayer[] {
+  const list = programTracks(instance.program, tracks);
+  if (list.length === 0) return [];
+
+  const scale = options.timelineScale ?? 1;
+  const seamSec = clampSeam(options.seamSeconds ?? DEFAULT_SEAM_SECONDS, list);
+  const elapsedSec = ((reading.nowMs - instance.startMs) / 1000) * scale;
+  const placed = placeInPlaylist(instance.program, list, elapsedSec, seamSec);
+  if (!placed) return [];
+
+  const loops = list.length === 1;
+  const at = (index: number, offset: number, pass: number) =>
+    point(station, instance, placed, index, offset, pass, reading, scale, loops);
+
+  const primary = at(placed.trackIndex, placed.offsetSec, placed.pass);
+
+  // At the very start of an airing there is nothing before it to overlap: the
+  // programme handover covers that seam instead.
+  const opening = placed.pass === 0 && placed.trackIndex === 0;
+  const inSeam = seamSec > 0 && placed.offsetSec < seamSec && !opening;
+
+  const layers: AudioLayer[] = [{
+    ...primary,
+    role,
+    playing: true,
+    blend: dayBlend * (inSeam ? Math.sin((placed.offsetSec / seamSec) * (Math.PI / 2)) : 1),
+  }];
+
+  // The outgoing airing is already fading out, so its own seams don't matter.
+  if (role === 'outgoing') return layers;
+
+  if (inSeam) {
+    // The track before this one is still running, into its final seam.
+    const previousIndex = placed.trackIndex - 1;
+    const fromThisPass = previousIndex >= 0;
+    const order = fromThisPass ? placed.order : orderForPass(instance.program, list, placed.pass - 1);
+    const index = fromThisPass ? previousIndex : order.length - 1;
+    const track = order[index];
+    if (track) {
+      const tail = at(index, strideOf(track, seamSec) + placed.offsetSec, fromThisPass ? placed.pass : placed.pass - 1);
+      layers.push({
+        ...tail,
+        track,
+        role,
+        playing: true,
+        blend: dayBlend * Math.cos((placed.offsetSec / seamSec) * (Math.PI / 2)),
+      });
+    }
+  }
+
+  // Cue the next track early so it can come in on time over a slow connection.
+  const lead = Math.min(LEAD_SECONDS, placed.strideSec / 2);
+  if (seamSec > 0 && placed.offsetSec > placed.strideSec - lead) {
+    const nextIndex = placed.trackIndex + 1;
+    const wraps = nextIndex >= placed.order.length;
+    const order = wraps ? orderForPass(instance.program, list, placed.pass + 1) : placed.order;
+    const index = wraps ? 0 : nextIndex;
+    const track = order[index];
+    if (track) {
+      layers.push({
+        ...at(index, 0, wraps ? placed.pass + 1 : placed.pass),
+        track,
+        role,
+        playing: false,
+        blend: 0,
+      });
+    }
+  }
+
+  return layers;
+}
+
+/**
+ * Everything a station has on air right now: the current programme, the
+ * outgoing one still fading out if a handover is in progress, and the overlaps
+ * where one track gives way to the next.
  */
 export function resolveStationLayers(
   station: Station,
@@ -259,36 +432,28 @@ export function resolveStationLayers(
   tracks: ReadonlyMap<string, Track>,
   options: ResolveOptions = {},
 ): AudioLayer[] {
-  const scale = options.timelineScale ?? 1;
   const instance = resolveProgram(station, reading);
   if (!instance) return [];
 
-  const current = playbackForInstance(station, instance, reading, tracks, scale);
   const previous = previousProgram(station, reading, instance);
-
   const windowSec = (instance.endMs - instance.startMs) / 1000;
-  // Never spend more than a quarter of a short program on the handover, which
+  // Never spend more than a quarter of a short programme on the handover, which
   // matters in game mode where a daypart can be under a minute of real time.
   const blendSec = Math.max(0, Math.min(options.blendSeconds ?? DEFAULT_BLEND_SECONDS, windowSec / 4));
   const sinceHandover = (reading.nowMs - instance.startMs) / 1000;
+  const handingOver = previous !== null && blendSec > 0 && sinceHandover < blendSec;
 
-  if (!current) {
-    // Dead air on the incoming program still lets the outgoing one fade away.
-    if (!previous || blendSec <= 0 || sinceHandover >= blendSec) return [];
-    const tail = playbackForInstance(station, previous, reading, tracks, scale);
-    if (!tail) return [];
-    return [{ ...tail, role: 'outgoing', blend: Math.cos((sinceHandover / blendSec) * (Math.PI / 2)) }];
+  const x = handingOver ? Math.min(1, Math.max(0, sinceHandover / blendSec)) : 1;
+  const layers = layersForInstance(
+    station, instance, reading, tracks, options, 'current',
+    handingOver ? Math.sin(x * (Math.PI / 2)) : 1,
+  );
+
+  if (handingOver && previous) {
+    layers.push(...layersForInstance(
+      station, previous, reading, tracks, options, 'outgoing', Math.cos(x * (Math.PI / 2)),
+    ));
   }
 
-  if (!previous || blendSec <= 0 || sinceHandover >= blendSec) {
-    return [{ ...current, role: 'current', blend: 1 }];
-  }
-
-  const x = Math.min(1, Math.max(0, sinceHandover / blendSec));
-  const layers: AudioLayer[] = [
-    { ...current, role: 'current', blend: Math.sin(x * (Math.PI / 2)) },
-  ];
-  const tail = playbackForInstance(station, previous, reading, tracks, scale);
-  if (tail) layers.push({ ...tail, role: 'outgoing', blend: Math.cos(x * (Math.PI / 2)) });
   return layers;
 }

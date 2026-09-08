@@ -64,4 +64,6 @@ export interface Settings {
   lastChannel: number;
   /** Real seconds of overlap when one daypart hands over to the next. */
   blendSeconds: number;
+  /** Seconds of overlap where a track gives way to the next, or to itself. */
+  seamSeconds: number;
 }

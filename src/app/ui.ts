@@ -41,6 +41,7 @@ export class RadioUI {
   private readonly dayMinutes = el('input', { class: 'num', type: 'number', min: '1', max: '1440', step: '1' });
   private readonly compress = el('input', { type: 'checkbox' });
   private readonly blendSeconds = el('input', { class: 'num', type: 'number', min: '0', max: '120', step: '1' });
+  private readonly seamMs = el('input', { class: 'num', type: 'number', min: '0', max: '5000', step: '10' });
 
   constructor(private readonly radio: Radio, private readonly root: HTMLElement) {}
 
@@ -58,6 +59,7 @@ export class RadioUI {
     this.dayMinutes.addEventListener('change', () => this.radio.setGameDayMinutes(Number(this.dayMinutes.value)));
     this.compress.addEventListener('change', () => this.radio.setCompressTrackTimeline(this.compress.checked));
     this.blendSeconds.addEventListener('change', () => this.radio.setBlendSeconds(Number(this.blendSeconds.value)));
+    this.seamMs.addEventListener('change', () => this.radio.setSeamSeconds(Number(this.seamMs.value) / 1000));
 
     clear(this.root);
     this.root.append(el('section', { class: 'pane' },
@@ -72,6 +74,7 @@ export class RadioUI {
       el('div', { class: 'row wrap' },
         el('label', {}, 'game day (real min)', this.dayMinutes),
         el('label', {}, 'blend (s)', this.blendSeconds),
+        el('label', {}, 'loop seam (ms)', this.seamMs),
         el('label', {}, this.compress, ' compress track timeline too'),
       ),
       o.diagnostics,
@@ -138,6 +141,7 @@ export class RadioUI {
     if (!this.volume.isTurning) this.volume.set(state.settings.volume);
     if (document.activeElement !== this.dayMinutes) this.dayMinutes.value = String(state.settings.gameDayMinutes);
     if (document.activeElement !== this.blendSeconds) this.blendSeconds.value = String(state.settings.blendSeconds);
+    if (document.activeElement !== this.seamMs) this.seamMs.value = String(Math.round(state.settings.seamSeconds * 1000));
     this.compress.checked = state.settings.compressTrackTimeline;
     this.modeReal.classList.toggle('active', state.settings.mode === 'real');
     this.modeGame.classList.toggle('active', state.settings.mode === 'game');
