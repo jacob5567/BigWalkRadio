@@ -58,6 +58,7 @@ export class Radio {
   private listeners = new Set<Listener>();
   private timer: number | null = null;
   private ready = false;
+  private disposed = false;
   private saveTimer: number | null = null;
   private lastMediaKey = '';
   private unbindMediaKeys: (() => void) | null = null;
@@ -145,6 +146,8 @@ export class Radio {
       this.save();
       // Starting the audio has to happen inside the press that turned it on.
       await this.engine.start();
+      // Which is long enough for the radio to have been shut down under us.
+      if (this.disposed) return;
     }
 
     const action: SfxAction = next === OFF ? 'off' : from === OFF ? 'on' : 'channelChange';
@@ -232,6 +235,7 @@ export class Radio {
 
   /** Recompute the broadcast and push it to the audio engine and the UI. */
   tick(): void {
+    if (this.disposed) return;
     const state = this.snapshot();
 
     if (this.engine.isRunning) {
@@ -277,6 +281,7 @@ export class Radio {
 
   /** Stop ticking and release the audio hardware. */
   dispose(): void {
+    this.disposed = true;
     if (this.timer !== null) {
       clearInterval(this.timer);
       this.timer = null;
@@ -299,6 +304,8 @@ export class Radio {
     if (key === this.lastMediaKey) return;
     this.lastMediaKey = key;
     navigator.mediaSession.playbackState = state.position === OFF ? 'paused' : 'playing';
+    // Some platforms hand out the session without the metadata constructor.
+    if (typeof MediaMetadata === 'undefined') return;
     navigator.mediaSession.metadata = new MediaMetadata({
       title: playing ? playing.track.name : 'Off',
       artist: state.onAir ? `${state.onAir.station.name} · Channel ${state.position}` : 'Radio',
