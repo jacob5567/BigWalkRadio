@@ -382,11 +382,11 @@ Give CI its own account with no sudo, owning only the app directory.
 ```bash
 sudo adduser --disabled-password --gecos "" deploy
 sudo chown -R deploy:deploy /srv/bigwalkradio/app
-sudo -u deploy mkdir -p /home/deploy/.ssh
-sudo -u deploy chmod 700 /home/deploy/.ssh
 ```
 
-The media stays owned by `jacob`, so a compromised deploy key cannot touch it.
+No password is right here: the account is key-only and has no sudo, so a
+password would only be a second way in. The media stays owned by `jacob`, so a
+compromised deploy key cannot touch it.
 
 ### The key
 
@@ -394,8 +394,27 @@ On your machine, generate a key **used for nothing else**:
 
 ```bash
 ssh-keygen -t ed25519 -f ~/.ssh/bigwalkradio-deploy -C "github-actions" -N ""
-ssh-copy-id -i ~/.ssh/bigwalkradio-deploy.pub deploy@bigwalkradio.stream
 ssh-keyscan bigwalkradio.stream    # keep this output for the next step
+scp ~/.ssh/bigwalkradio-deploy.pub jacob@bigwalkradio.stream:/tmp/deploy.pub
+```
+
+`ssh-copy-id` is no use for this account -- it authenticates with a password,
+and this one has none and could not use one anyway. Install the key from your
+`jacob` session instead, which has the sudo to do it:
+
+```bash
+sudo install -d -m 700 -o deploy -g deploy /home/deploy/.ssh
+sudo install -m 600 -o deploy -g deploy /tmp/deploy.pub /home/deploy/.ssh/authorized_keys
+rm /tmp/deploy.pub
+```
+
+`install` sets owner and mode as it writes, so there is no moment where the
+file belongs to the wrong account.
+
+Prove it works before going near GitHub:
+
+```bash
+ssh -i ~/.ssh/bigwalkradio-deploy deploy@bigwalkradio.stream 'id; ls -la /srv/bigwalkradio/app'
 ```
 
 ### Repository secrets
