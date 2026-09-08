@@ -1,7 +1,7 @@
 {
-  "name": "Radio",
-  "short_name": "Radio",
-  "description": "A pocket radio that plays your own audio on a running broadcast schedule.",
+  "name": "Big Walk Radio",
+  "short_name": "Big Walk Radio",
+  "description": "The radio from Big Walk: seven channels on a broadcast schedule that runs whether or not anyone is listening.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

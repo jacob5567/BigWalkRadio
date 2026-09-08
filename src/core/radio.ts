@@ -356,7 +356,7 @@ export class Radio {
     if (typeof MediaMetadata === 'undefined') return;
     navigator.mediaSession.metadata = new MediaMetadata({
       title: playing ? playing.track.name : 'Off',
-      artist: state.onAir ? `${state.onAir.station.name} · Channel ${state.position}` : 'Radio',
+      artist: state.onAir ? `${state.onAir.station.name} · Channel ${state.position}` : 'Big Walk Radio',
       album: playing?.instance.program.name ?? '',
     });
   }
