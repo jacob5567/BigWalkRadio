@@ -7,6 +7,9 @@ dist
 # committed -- the app plays files the listener supplies at runtime.
 music/
 
+# Sound effects, likewise provided by the host rather than committed.
+audio/
+
 # Belt and braces: never commit audio from anywhere in the tree.
 *.flac
 *.mp3

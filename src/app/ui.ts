@@ -147,11 +147,9 @@ export class RadioUI {
     this.modeGame.classList.toggle('active', state.settings.mode === 'game');
 
     // A file the host isn't serving is otherwise just silence, so say so.
-    const failed = this.radio.engine.failedTrackIds.size;
+    const failed = this.radio.engine.failedTrackIds.size + this.radio.engine.missingSounds.size;
     const missing = failed > 0 ? ` · ${failed} file${failed === 1 ? '' : 's'} not served` : '';
-    const level = state.tune.settling
-      ? `static ${Math.round(state.tune.staticGain * 100)}%`
-      : off ? 'silent' : `channel ${state.position}`;
+    const level = state.tune.settling ? 'changing' : off ? 'silent' : `channel ${state.position}`;
     o.diagnostics.textContent = `audio ${this.radio.engine.contextState} · ${level}${missing}`;
   }
 }

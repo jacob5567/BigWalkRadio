@@ -1,3 +1,5 @@
+import { SoundBank, type SfxAction } from './sounds';
+
 export type SyncMode = 'lock' | 'free';
 
 export interface VoiceTarget {
@@ -40,8 +42,7 @@ const RELEASE_MS = 400;
 export class AudioEngine {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
-  private noiseGain: GainNode | null = null;
-  private noiseSource: AudioBufferSourceNode | null = null;
+  private readonly sounds = new SoundBank();
   private readonly voices = new Map<string, Voice>();
   private volume = 0.8;
   private running = false;
@@ -73,17 +74,34 @@ export class AudioEngine {
       this.master = this.ctx.createGain();
       this.master.gain.value = this.volume;
       this.master.connect(this.ctx.destination);
-      this.buildNoise();
     }
+    // Resume first, while still inside the gesture that asked for it.
     if (this.ctx.state === 'suspended') await this.ctx.resume();
     this.running = true;
+    // The switch and channel noises share the master gain, so the volume wheel
+    // works them along with everything else. Already fetched, so this is quick.
+    await this.sounds.load(this.ctx, this.master!);
+  }
+
+  /** Collects the sound effects ahead of the first press. */
+  prefetchSounds(): Promise<void> {
+    return this.sounds.prefetch();
   }
 
   async stop(): Promise<void> {
     this.running = false;
     for (const id of [...this.voices.keys()]) this.release(id);
-    this.setStaticGain(0);
     if (this.ctx && this.ctx.state === 'running') await this.ctx.suspend();
+  }
+
+  /** Plays one take of an action's sound. Returns how long it runs, in seconds. */
+  playSound(action: SfxAction): number {
+    return this.ctx ? this.sounds.play(action) : 0;
+  }
+
+  /** Sound effect files the host isn't serving. */
+  get missingSounds(): ReadonlySet<string> {
+    return this.sounds.missing;
   }
 
   setVolume(v: number): void {
@@ -91,12 +109,6 @@ export class AudioEngine {
     if (this.master && this.ctx) {
       this.master.gain.setTargetAtTime(this.volume, this.ctx.currentTime, RAMP);
     }
-  }
-
-  setStaticGain(level: number): void {
-    if (!this.noiseGain || !this.ctx) return;
-    const g = this.running ? Math.min(1, Math.max(0, level)) * 0.28 : 0;
-    this.noiseGain.gain.setTargetAtTime(g, this.ctx.currentTime, RAMP);
   }
 
   /** Apply the current set of audible stations. Called on every scheduler tick. */
@@ -209,43 +221,8 @@ export class AudioEngine {
     }, RELEASE_MS);
   }
 
-  private buildNoise(): void {
-    const ctx = this.ctx!;
-    const seconds = 2;
-    const buffer = ctx.createBuffer(1, ctx.sampleRate * seconds, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    // Slightly filtered white noise reads as FM hiss rather than a hard buzz.
-    let last = 0;
-    for (let i = 0; i < data.length; i++) {
-      const white = Math.random() * 2 - 1;
-      last = 0.7 * last + 0.3 * white;
-      data[i] = last * 1.4;
-    }
-
-    const source = ctx.createBufferSource();
-    source.buffer = buffer;
-    source.loop = true;
-
-    const band = ctx.createBiquadFilter();
-    band.type = 'bandpass';
-    band.frequency.value = 2400;
-    band.Q.value = 0.6;
-
-    const gain = ctx.createGain();
-    gain.gain.value = 0;
-
-    source.connect(band);
-    band.connect(gain);
-    gain.connect(this.master!);
-    source.start();
-
-    this.noiseSource = source;
-    this.noiseGain = gain;
-  }
-
   dispose(): void {
     for (const id of [...this.voices.keys()]) this.release(id);
-    this.noiseSource?.stop();
     void this.ctx?.close();
     this.ctx = null;
     this.running = false;

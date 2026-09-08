@@ -48,10 +48,20 @@ export class FakeAudioContext {
   createBiquadFilter = () => new FakeFilter();
   createBufferSource = () => new FakeBufferSource();
   createMediaElementSource = () => new FakeNode();
-  createBuffer = (channels: number, length: number) => ({
-    getChannelData: () => new Float32Array(length),
-    numberOfChannels: channels,
-  });
+  /** Real backing arrays, so tests can see what was written into a buffer. */
+  createBuffer = (channels: number, length: number, sampleRate = this.sampleRate) => {
+    const data = Array.from({ length: channels }, () => new Float32Array(length));
+    return {
+      numberOfChannels: channels,
+      length,
+      sampleRate,
+      duration: length / sampleRate,
+      getChannelData: (index: number) => data[index]!,
+    } as unknown as AudioBuffer;
+  };
+
+  /** Stands in for a decoder: one mono buffer, long enough to be measurable. */
+  decodeAudioData = vi.fn(async () => this.createBuffer(1, 8820, 44100));
   resume = vi.fn(async () => {
     this.state = 'running';
   });
@@ -96,6 +106,13 @@ export function installBrowserStubs(): void {
     return element;
   } as unknown as typeof window.Audio);
   vi.stubGlobal('MediaMetadata', class { constructor(public init: unknown) {} });
+
+  // Sound effects are fetched on load; serve them something decodable.
+  vi.stubGlobal('fetch', vi.fn(async () => ({
+    ok: true,
+    status: 200,
+    arrayBuffer: async () => new ArrayBuffer(8),
+  })));
 
   mediaSessionHandlers.clear();
   mediaSession.metadata = null;

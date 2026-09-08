@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_TUNE, OFF, nextPosition, readTuning } from '../src/core/tuning';
 
-const { staticMs, fadeMs } = DEFAULT_TUNE;
+const { holdMs, fadeMs } = DEFAULT_TUNE;
 
 describe('nextPosition', () => {
   it('clicks up through the channels and back to off', () => {
@@ -20,49 +20,47 @@ describe('nextPosition', () => {
 });
 
 describe('readTuning', () => {
-  it('covers the change with static before the channel arrives', () => {
+  it('holds the channel silent while the click covers the change', () => {
     const early = readTuning(0, true);
-    expect(early.staticGain).toBe(1);
     expect(early.stationGain).toBe(0);
     expect(early.settling).toBe(true);
-
-    const late = readTuning(staticMs - 1, true);
-    expect(late.staticGain).toBe(1);
-    expect(late.stationGain).toBe(0);
+    expect(readTuning(holdMs - 1, true).stationGain).toBe(0);
   });
 
-  it('trades the static for the channel at equal power', () => {
-    const mid = readTuning(staticMs + fadeMs / 2, true);
+  it('brings the channel up on an equal-power curve', () => {
+    const mid = readTuning(holdMs + fadeMs / 2, true);
     expect(mid.stationGain).toBeCloseTo(Math.SQRT1_2, 6);
-    expect(mid.staticGain).toBeCloseTo(Math.SQRT1_2, 6);
-    expect(mid.stationGain ** 2 + mid.staticGain ** 2).toBeCloseTo(1, 6);
     expect(mid.settling).toBe(true);
   });
 
   it('settles into a clean channel', () => {
-    const done = readTuning(staticMs + fadeMs, true);
-    expect(done).toEqual({ stationGain: 1, staticGain: 0, settling: false });
+    const done = readTuning(holdMs + fadeMs, true);
+    expect(done).toEqual({ stationGain: 1, settling: false });
     expect(readTuning(60_000, true)).toEqual(done);
   });
 
-  it('fades the static into silence when switched off', () => {
-    expect(readTuning(0, false).staticGain).toBe(1);
-    expect(readTuning(staticMs + fadeMs / 2, false).stationGain).toBe(0);
-    expect(readTuning(staticMs + fadeMs / 2, false).staticGain).toBeCloseTo(Math.SQRT1_2, 6);
-    expect(readTuning(staticMs + fadeMs, false)).toEqual({
-      stationGain: 0, staticGain: 0, settling: false,
-    });
+  it('brings nothing up when switched off', () => {
+    expect(readTuning(0, false).stationGain).toBe(0);
+    expect(readTuning(holdMs + fadeMs / 2, false).stationGain).toBe(0);
+    expect(readTuning(holdMs + fadeMs, false)).toEqual({ stationGain: 0, settling: false });
   });
 
   it('is quiet and settled before the switch has ever been touched', () => {
-    const untouched = readTuning(Number.POSITIVE_INFINITY, false);
-    expect(untouched).toEqual({ stationGain: 0, staticGain: 0, settling: false });
+    expect(readTuning(Number.POSITIVE_INFINITY, false))
+      .toEqual({ stationGain: 0, settling: false });
   });
 
-  it('never leaves a silent gap between the static and the channel', () => {
-    for (let t = 0; t <= staticMs + fadeMs; t += 5) {
-      const { stationGain, staticGain } = readTuning(t, true);
-      expect(Math.max(stationGain, staticGain), `at ${t}ms`).toBeGreaterThan(0.65);
+  it('rises without ever dipping backwards', () => {
+    let previous = -1;
+    for (let t = 0; t <= holdMs + fadeMs; t += 5) {
+      const { stationGain } = readTuning(t, true);
+      expect(stationGain, `at ${t}ms`).toBeGreaterThanOrEqual(previous);
+      previous = stationGain;
     }
+  });
+
+  it("is short enough to sit under the radio's own click", () => {
+    // The recorded clicks run about 200-270ms.
+    expect(holdMs + fadeMs).toBeLessThanOrEqual(300);
   });
 });

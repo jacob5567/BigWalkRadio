@@ -8,8 +8,8 @@ import { DEFAULT_TUNE } from '../src/core/tuning';
 import { RadioUI } from '../src/app/ui';
 import { installBrowserStubs, mediaSession, mediaSessionHandlers, resetStorage } from './browser-stubs';
 
-/** Long enough for the static to clear and a channel to settle in. */
-const SETTLED_MS = DEFAULT_TUNE.staticMs + DEFAULT_TUNE.fadeMs + 10;
+/** Long enough for the click to pass and a channel to settle in. */
+const SETTLED_MS = DEFAULT_TUNE.holdMs + DEFAULT_TUNE.fadeMs + 10;
 const START = Date.parse('2026-03-04T10:00:00Z');
 
 describe('the switch', () => {
@@ -45,7 +45,7 @@ describe('the switch', () => {
     const state = radio.snapshot();
     expect(state.position).toBe(0);
     expect(state.onAir).toBeNull();
-    expect(state.tune).toEqual({ stationGain: 0, staticGain: 0, settling: false });
+    expect(state.tune).toEqual({ stationGain: 0, settling: false });
   });
 
   it('clicks up through every channel and back to off', async () => {
@@ -71,16 +71,14 @@ describe('the switch', () => {
     expect(radio.engine.isRunning).toBe(true);
   });
 
-  it('covers the change with static before the channel comes up', async () => {
+  it('holds the channel back while the click covers the change', async () => {
     await radio.setPosition(3);
     const during = radio.snapshot();
-    expect(during.tune.staticGain).toBe(1);
     expect(during.tune.stationGain).toBe(0);
     expect(during.tune.settling).toBe(true);
 
     settle();
     const after = radio.snapshot();
-    expect(after.tune.staticGain).toBe(0);
     expect(after.tune.stationGain).toBe(1);
     expect(after.tune.settling).toBe(false);
   });
@@ -113,21 +111,31 @@ describe('the switch', () => {
     expect(radio.snapshot().position).toBe(0);
   });
 
-  it('puts static over a change made with any of the controls', async () => {
+  it('sounds the right click for whichever control made the change', async () => {
+    const play = vi.spyOn(radio.engine, 'playSound');
+
     await radio.setPower(true);
-    expect(radio.snapshot().tune.staticGain).toBe(1);
+    expect(play).toHaveBeenLastCalledWith('on');
     settle();
 
     await radio.stepChannel(1);
-    expect(radio.snapshot().tune.staticGain).toBe(1);
+    expect(play).toHaveBeenLastCalledWith('channelChange');
     settle();
 
     await radio.advance();
-    expect(radio.snapshot().tune.staticGain).toBe(1);
+    expect(play).toHaveBeenLastCalledWith('channelChange');
     settle();
 
     await radio.setPower(false);
-    expect(radio.snapshot().tune.staticGain).toBe(1);
+    expect(play).toHaveBeenLastCalledWith('off');
+  });
+
+  it('sounds the on click only when coming up from off', async () => {
+    const play = vi.spyOn(radio.engine, 'playSound');
+    await radio.advance(); // off -> 1
+    settle();
+    await radio.advance(); // 1 -> 2
+    expect(play.mock.calls.map(([action]) => action)).toEqual(['on', 'channelChange']);
   });
 
   it('ignores a control that asks for the position it is already on', async () => {
@@ -137,21 +145,20 @@ describe('the switch', () => {
     expect(radio.snapshot().tune.settling).toBe(false);
   });
 
-  it('puts static over every change, not just the first', async () => {
+  it('covers every change, not just the first', async () => {
     await radio.setPosition(2);
     settle();
     expect(radio.snapshot().tune.settling).toBe(false);
 
+    const play = vi.spyOn(radio.engine, 'playSound');
     await radio.advance();
-    expect(radio.snapshot().tune.staticGain).toBe(1);
+    expect(radio.snapshot().tune.settling).toBe(true);
+    expect(play).toHaveBeenCalledOnce();
   });
 
-  it('holds the channel silent while the static is still up', async () => {
+  it('holds the channel silent until the click has passed', async () => {
     const update = vi.spyOn(radio.engine, 'update');
-    const setStatic = vi.spyOn(radio.engine, 'setStaticGain');
     await radio.setPosition(5);
-
-    expect(setStatic).toHaveBeenLastCalledWith(1);
     for (const target of update.mock.lastCall![0]) expect(target.gain).toBe(0);
   });
 
@@ -221,7 +228,7 @@ describe('the switch', () => {
     expect(targets.filter((t) => t.playing)).toHaveLength(1);
   });
 
-  it('lets the audio hardware sleep once the static from switching off dies away', async () => {
+  it('lets the audio hardware sleep once the off click has finished', async () => {
     await radio.setPosition(1);
     settle();
     expect(radio.engine.isRunning).toBe(true);
@@ -282,9 +289,9 @@ describe('the media keys', () => {
 
   it('tells the lock screen whether the radio is on', async () => {
     await press('play');
-    expect(mediaSession.playbackState).toBe('playing');
+    await vi.waitFor(() => expect(mediaSession.playbackState).toBe('playing'));
     await press('pause');
-    expect(mediaSession.playbackState).toBe('paused');
+    await vi.waitFor(() => expect(mediaSession.playbackState).toBe('paused'));
   });
 
   it('names the station and what it is playing', async () => {
@@ -460,11 +467,11 @@ describe('RadioUI', () => {
     expect(power.getAttribute('aria-checked')).toBe('false');
 
     power.click();
-    await vi.waitFor(() => expect(radio.snapshot().power).toBe(true));
-    expect(power.getAttribute('aria-checked')).toBe('true');
+    await vi.waitFor(() => expect(power.getAttribute('aria-checked')).toBe('true'));
 
     power.click();
-    await vi.waitFor(() => expect(radio.snapshot().power).toBe(false));
+    await vi.waitFor(() => expect(power.getAttribute('aria-checked')).toBe('false'));
+    expect(radio.snapshot().power).toBe(false);
   });
 
   it('greys out the steppers until there is something to step between', async () => {
@@ -473,8 +480,7 @@ describe('RadioUI', () => {
     expect(back!.disabled).toBe(true);
 
     root.querySelector<HTMLButtonElement>('.power')!.click();
-    await vi.waitFor(() => expect(radio.snapshot().power).toBe(true));
-    expect(back!.disabled).toBe(false);
+    await vi.waitFor(() => expect(back!.disabled).toBe(false));
 
     forward!.click();
     await vi.waitFor(() => expect(radio.snapshot().position).toBe(2));
@@ -485,9 +491,8 @@ describe('RadioUI', () => {
   it('advances a channel per press and says what is on', async () => {
     const { root, radio, knob } = await mount();
     knob.click();
-    await vi.waitFor(() => expect(radio.snapshot().position).toBe(1));
+    await vi.waitFor(() => expect(root.querySelector('.position-number')!.textContent).toBe('1'));
 
-    expect(root.querySelector('.position-number')!.textContent).toBe('1');
     expect(root.querySelector('.position-label')!.textContent).toBe(radio.getStations()[0]!.name);
     // Still inside the static, so it must not claim a track yet.
     expect(root.querySelector('.daypart')!.textContent).toBe('tuning…');
@@ -501,8 +506,10 @@ describe('RadioUI', () => {
   it('wraps back to off after the last channel', async () => {
     const { root, radio, knob } = await mount();
     for (let i = 0; i < radio.channelCount + 1; i++) {
+      const expected = String((i + 1) % (radio.channelCount + 1));
       knob.click();
-      await vi.waitFor(() => {});
+      await vi.waitFor(() =>
+        expect(root.querySelector('.position-number')!.textContent).toBe(expected));
     }
     expect(root.querySelector('.position-number')!.textContent).toBe('0');
     expect(root.querySelector('.position-label')!.textContent).toBe('off');

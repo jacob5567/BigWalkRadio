@@ -3,7 +3,8 @@ import { extname, join, resolve, sep } from 'node:path';
 import type { Connect, Plugin } from 'vite';
 import { defineConfig } from 'vite';
 
-const MUSIC_DIR = resolve(process.cwd(), 'music');
+/** Directories the host puts in place, served here the way it will serve them. */
+const SERVED = ['music', 'audio'];
 
 const CONTENT_TYPES: Record<string, string> = {
   '.flac': 'audio/flac',
@@ -20,18 +21,20 @@ const CONTENT_TYPES: Record<string, string> = {
 };
 
 /**
- * Serves ./music during dev and preview, the way the host is expected to serve
- * it in production. Range requests are honoured so the player can seek, which
- * it does constantly to stay on the broadcast schedule.
+ * Serves ./music and ./audio during dev and preview, the way the host is
+ * expected to serve them in production. Range requests are honoured so the
+ * player can seek, which it does constantly to stay on the broadcast schedule.
  */
-function serveMusic(): Plugin {
+function serveMedia(): Plugin {
   const middleware: Connect.NextHandleFunction = (req, res, next) => {
     const url = req.url ?? '';
-    if (!url.startsWith('/music/')) return next();
+    const dir = SERVED.find((name) => url.startsWith(`/${name}/`));
+    if (!dir) return next();
 
-    const relative = decodeURIComponent(url.split('?')[0]!.slice('/music/'.length));
-    const path = resolve(join(MUSIC_DIR, relative));
-    if (path !== MUSIC_DIR && !path.startsWith(MUSIC_DIR + sep)) {
+    const root = resolve(process.cwd(), dir);
+    const relative = decodeURIComponent(url.split('?')[0]!.slice(dir.length + 2));
+    const path = resolve(join(root, relative));
+    if (path !== root && !path.startsWith(root + sep)) {
       res.statusCode = 403;
       return res.end('forbidden');
     }
@@ -77,14 +80,14 @@ function serveMusic(): Plugin {
   };
 
   return {
-    name: 'serve-music',
+    name: 'serve-media',
     configureServer: (server) => void server.middlewares.use(middleware),
     configurePreviewServer: (server) => void server.middlewares.use(middleware),
   };
 }
 
 export default defineConfig({
-  plugins: [serveMusic()],
+  plugins: [serveMedia()],
   server: { host: true },
   preview: { host: true },
   build: { target: 'es2022' },

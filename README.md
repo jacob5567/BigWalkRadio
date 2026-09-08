@@ -40,6 +40,7 @@ the filenames exactly as they come:
 ```
 index.html
 assets/
+audio/     <- the switch and channel-change sounds
 music/
   aksfx - Radio- Lobby (Original Music from Big Walk)/
     aksfx - Radio- Lobby (Original Music from Big Walk) - 01 -12-00am- Motif.ogg
@@ -56,6 +57,13 @@ loose in `music/` is ignored.
 Seven albums make seven channels, and the whole set is about 200 MB as Ogg.
 The app reads its channels from `src/core/presets.ts`, generated from those
 filenames.
+
+The radio's own noises go in `audio/` alongside, named
+`sfx_prop_radio_<action>_<nn>.wav` — the action groups the takes, and the
+number just distinguishes them, so adding a fifth channel-change take is a
+matter of dropping the file in and regenerating. They stay as WAV: all ten come
+to 220 KB, and they are short sharp clicks, which is exactly the material a
+lossy codec smears. If they are missing the radio still works, quietly.
 
 Two things the host's server must do:
 
@@ -76,9 +84,10 @@ regenerate the dial:
 npm run presets    # rescans ./music, rewrites src/core/presets.ts
 ```
 
-It reads names, times and durations only — never the audio itself. Durations
-are baked in so the schedule is right before anything loads; if `ffprobe`
-isn't available, the browser reads them from the file headers instead.
+It reads names, times and durations only — never the audio itself, and it
+rewrites the sound effect list at the same time. Durations are baked in so the
+schedule is right before anything loads; if `ffprobe` isn't available, the
+browser reads them from the file headers instead.
 
 ## How the broadcast works
 
@@ -152,9 +161,11 @@ is expected: turning the radio back on is done in the app.
 
 They all move the same thing underneath: one position, where 0 is off and
 1…n select a channel. So every change, from whichever control, is covered by
-the same short burst of static that the incoming channel then rises through —
-nothing ever cuts straight from one track to another, and switching off fades
-the static away to silence rather than stopping dead.
+the radio's own click, which the incoming channel then comes up under — nothing
+ever cuts straight from one track to another. Switching on, switching off and
+changing channel each have several takes to choose between, picked at random
+but never the same one twice running, so working the switch doesn't sound like
+one recording on repeat.
 
 The radio always opens switched off. A browser won't start audio without a
 press, so a remembered position could only ever be a lie. The channel it was

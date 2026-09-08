@@ -5,6 +5,7 @@ import { getKV, setKV } from './db';
 import { DEFAULT_SETTINGS, makeDefaultStations } from './defaults';
 import { bindMediaKeys } from './media-keys';
 import { normalizeStation, resolveStationLayers, type AudioLayer } from './schedule';
+import type { SfxAction } from './sounds';
 import { DEFAULT_TUNE, OFF, nextPosition, readTuning, type TuneConfig, type TuneState } from './tuning';
 import type { ClockMode, Settings, Station } from './types';
 
@@ -64,6 +65,8 @@ export class Radio {
   /** The radio always starts off: audio can't begin without a press anyway. */
   private position = OFF;
   private switchedAtMs = Number.NEGATIVE_INFINITY;
+  /** When the click covering the last change finishes. */
+  private soundUntilMs = 0;
 
   constructor() {
     this.engine = new AudioEngine((trackId) => this.catalog.urlFor(trackId));
@@ -76,6 +79,8 @@ export class Radio {
     this.clock = makeClock(this.settings.mode, this.settings.gameDayMinutes);
     this.ready = true;
     this.startTicking();
+    // Collect the switch and channel sounds now, so the first press has them.
+    void this.engine.prefetchSounds();
     this.unbindMediaKeys = bindMediaKeys({
       play: () => void this.setPower(true),
       pause: () => void this.setPower(false),
@@ -132,6 +137,7 @@ export class Radio {
   async setPosition(position: number): Promise<void> {
     const next = Math.max(OFF, Math.min(this.stations.length, Math.round(position)));
     if (next === this.position) return;
+    const from = this.position;
     this.position = next;
     this.switchedAtMs = Date.now();
     if (next !== OFF) {
@@ -140,6 +146,9 @@ export class Radio {
       // Starting the audio has to happen inside the press that turned it on.
       await this.engine.start();
     }
+
+    const action: SfxAction = next === OFF ? 'off' : from === OFF ? 'on' : 'channelChange';
+    this.soundUntilMs = Date.now() + this.engine.playSound(action) * 1000;
     this.tick();
   }
 
@@ -245,12 +254,12 @@ export class Radio {
         .slice(0, MAX_VOICES);
 
       this.engine.update(targets);
-      this.engine.setStaticGain(state.tune.staticGain);
       this.updateMediaSession(state);
 
-      // Once the static from switching off has died away, let the audio
-      // hardware go back to sleep.
-      if (state.position === OFF && !state.tune.settling) void this.engine.stop();
+      // Once the click of switching off has finished, let the audio hardware
+      // go back to sleep.
+      const quiet = !state.tune.settling && state.reading.nowMs >= this.soundUntilMs;
+      if (state.position === OFF && quiet) void this.engine.stop();
     }
 
     this.emit(state);
