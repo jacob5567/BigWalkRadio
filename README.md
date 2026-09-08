@@ -142,6 +142,12 @@ There are four ways in:
 - a **single button** that clicks on through each channel in turn and then off
   again
 
+The same four are available from outside the page: **play** and **pause** work
+the on/off switch, and **previous** and **next track** step between channels —
+from the lock screen, a headphone button, a Bluetooth remote or the keyboard's
+media keys. Stop counts as off. Like the on-screen steppers, the track buttons
+do nothing while the radio is off.
+
 They all move the same thing underneath: one position, where 0 is off and
 1…n select a channel. So every change, from whichever control, is covered by
 the same short burst of static that the incoming channel then rises through —

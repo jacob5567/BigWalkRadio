@@ -3,6 +3,7 @@ import { makeClock, type BroadcastClock, type ClockReading } from './clock';
 import { Catalog } from './catalog';
 import { getKV, setKV } from './db';
 import { DEFAULT_SETTINGS, makeDefaultStations } from './defaults';
+import { bindMediaKeys } from './media-keys';
 import { normalizeStation, resolveStationLayers, type AudioLayer } from './schedule';
 import { DEFAULT_TUNE, OFF, nextPosition, readTuning, type TuneConfig, type TuneState } from './tuning';
 import type { ClockMode, Settings, Station } from './types';
@@ -58,6 +59,7 @@ export class Radio {
   private ready = false;
   private saveTimer: number | null = null;
   private lastMediaKey = '';
+  private unbindMediaKeys: (() => void) | null = null;
 
   /** The radio always starts off: audio can't begin without a press anyway. */
   private position = OFF;
@@ -74,6 +76,12 @@ export class Radio {
     this.clock = makeClock(this.settings.mode, this.settings.gameDayMinutes);
     this.ready = true;
     this.startTicking();
+    this.unbindMediaKeys = bindMediaKeys({
+      play: () => void this.setPower(true),
+      pause: () => void this.setPower(false),
+      previous: () => void this.stepChannel(-1),
+      next: () => void this.stepChannel(1),
+    });
     this.emit();
     // Anything the build couldn't measure gets read from the file header, in
     // the background, so a missing duration doesn't hold up the dial.
@@ -269,6 +277,8 @@ export class Radio {
       this.saveTimer = null;
     }
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
+    this.unbindMediaKeys?.();
+    this.unbindMediaKeys = null;
     this.listeners.clear();
     this.engine.dispose();
   }

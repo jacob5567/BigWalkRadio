@@ -64,6 +64,22 @@ export class FakeAudioContext {
 /** Every media element built since the stubs were installed, in order. */
 export const createdAudio: HTMLAudioElement[] = [];
 
+/** Media key handlers the page has registered, by action name. */
+export const mediaSessionHandlers = new Map<string, (() => void) | null>();
+
+/** Actions the stubbed platform refuses, the way a real one refuses unknown ones. */
+export const unsupportedMediaActions = new Set<string>();
+
+/** The stubbed session itself, for checking metadata and playback state. */
+export const mediaSession = {
+  metadata: null as unknown,
+  playbackState: 'none' as string,
+  setActionHandler(action: string, handler: (() => void) | null) {
+    if (unsupportedMediaActions.has(action)) throw new TypeError(`unsupported action: ${action}`);
+    mediaSessionHandlers.set(action, handler);
+  },
+};
+
 /**
  * jsdom has no audio pipeline, so stand in for the parts the engine touches.
  * Media elements get a settable currentTime and a readyState that reports ready.
@@ -80,6 +96,11 @@ export function installBrowserStubs(): void {
     return element;
   } as unknown as typeof window.Audio);
   vi.stubGlobal('MediaMetadata', class { constructor(public init: unknown) {} });
+
+  mediaSessionHandlers.clear();
+  mediaSession.metadata = null;
+  mediaSession.playbackState = 'none';
+  Object.defineProperty(navigator, 'mediaSession', { configurable: true, value: mediaSession });
 
   const proto = window.HTMLMediaElement.prototype;
   proto.play = vi.fn(async function (this: HTMLMediaElement) {

@@ -6,7 +6,7 @@ import { setKV } from '../src/core/db';
 import { Radio } from '../src/core/radio';
 import { DEFAULT_TUNE } from '../src/core/tuning';
 import { RadioUI } from '../src/app/ui';
-import { installBrowserStubs, resetStorage } from './browser-stubs';
+import { installBrowserStubs, mediaSession, mediaSessionHandlers, resetStorage } from './browser-stubs';
 
 /** Long enough for the static to clear and a channel to settle in. */
 const SETTLED_MS = DEFAULT_TUNE.staticMs + DEFAULT_TUNE.fadeMs + 10;
@@ -230,6 +230,77 @@ describe('the switch', () => {
     expect(radio.engine.isRunning).toBe(true); // still voicing the static
     settle();
     expect(radio.engine.isRunning).toBe(false);
+  });
+});
+
+describe('the media keys', () => {
+  let radio: Radio;
+  const press = async (action: string) => {
+    mediaSessionHandlers.get(action)?.();
+    await vi.waitFor(() => {});
+  };
+
+  beforeEach(async () => {
+    installBrowserStubs();
+    await resetStorage();
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(START);
+    radio = new Radio();
+    await radio.init();
+  });
+
+  afterEach(() => {
+    radio.dispose();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it('turns the radio on and off with play and pause', async () => {
+    await press('play');
+    expect(radio.snapshot().power).toBe(true);
+    await press('pause');
+    expect(radio.snapshot().power).toBe(false);
+  });
+
+  it('steps channels with the track buttons', async () => {
+    await press('play');
+    expect(radio.snapshot().position).toBe(1);
+
+    await press('nexttrack');
+    expect(radio.snapshot().position).toBe(2);
+    await press('previoustrack');
+    expect(radio.snapshot().position).toBe(1);
+    // Back one more wraps round the dial rather than switching off.
+    await press('previoustrack');
+    expect(radio.snapshot().position).toBe(7);
+  });
+
+  it('leaves the track buttons dead while the radio is off, as on screen', async () => {
+    await press('nexttrack');
+    expect(radio.snapshot().position).toBe(0);
+  });
+
+  it('tells the lock screen whether the radio is on', async () => {
+    await press('play');
+    expect(mediaSession.playbackState).toBe('playing');
+    await press('pause');
+    expect(mediaSession.playbackState).toBe('paused');
+  });
+
+  it('names the station and what it is playing', async () => {
+    await radio.setPosition(5);
+    vi.setSystemTime(Date.now() + SETTLED_MS);
+    radio.tick();
+
+    const metadata = mediaSession.metadata as { init: { title: string; artist: string } };
+    expect(metadata.init.title).toBe('Leitmotif');
+    expect(metadata.init.artist).toContain('Lobby');
+    expect(metadata.init.artist).toContain('Channel 5');
+  });
+
+  it('lets go of the keys when the radio is shut down', async () => {
+    radio.dispose();
+    expect([...mediaSessionHandlers.values()].every((h) => h === null)).toBe(true);
   });
 });
 
