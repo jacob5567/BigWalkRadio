@@ -146,7 +146,9 @@ The same four are available from outside the page: **play** and **pause** work
 the on/off switch, and **previous** and **next track** step between channels —
 from the lock screen, a headphone button, a Bluetooth remote or the keyboard's
 media keys. Stop counts as off. Like the on-screen steppers, the track buttons
-do nothing while the radio is off.
+do nothing while the radio is off — and switching off pauses everything, so the
+platform drops the now-playing widget and there is nothing left to press. That
+is expected: turning the radio back on is done in the app.
 
 They all move the same thing underneath: one position, where 0 is off and
 1…n select a channel. So every change, from whichever control, is covered by
