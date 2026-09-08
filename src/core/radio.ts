@@ -115,7 +115,7 @@ export class Radio {
   // --- the controls ---------------------------------------------------------
   //
   // Four ways in, one position underneath, so every one of them gets the same
-  // burst of static over the change.
+  // click over the change.
 
   /** The on/off switch. Turning it on returns to the channel last listened to. */
   async setPower(on: boolean): Promise<void> {

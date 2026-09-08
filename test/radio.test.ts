@@ -30,7 +30,7 @@ describe('the switch', () => {
     vi.unstubAllGlobals();
   });
 
-  /** Move past the static so the channel is fully up. */
+  /** Move past the click so the channel is fully up. */
   const settle = () => {
     vi.setSystemTime(Date.now() + SETTLED_MS);
     radio.tick();
@@ -174,7 +174,7 @@ describe('the switch', () => {
   });
 
   it('feeds both sides of a daypart handover to the engine at once', async () => {
-    // Turn on early enough that the static has cleared by four seconds into
+    // Turn on early enough that the click has cleared by four seconds into
     // the 07:12 handover, halfway through an 8s blend.
     vi.setSystemTime(Date.parse('2026-03-04T07:12:04Z') - SETTLED_MS);
     await radio.setPosition(5);
@@ -234,7 +234,7 @@ describe('the switch', () => {
     expect(radio.engine.isRunning).toBe(true);
 
     await radio.setPosition(0);
-    expect(radio.engine.isRunning).toBe(true); // still voicing the static
+    expect(radio.engine.isRunning).toBe(true); // still voicing the click
     settle();
     expect(radio.engine.isRunning).toBe(false);
   });
