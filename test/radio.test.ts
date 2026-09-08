@@ -562,17 +562,6 @@ describe('RadioUI', () => {
     await vi.waitFor(() => expect(marker(root)).not.toBe(first));
   });
 
-  it('hisses over a change and settles once the channel is up', async () => {
-    const { root, radio, power } = await mount();
-    const film = root.querySelector<HTMLElement>('.screen-static')!;
-    power.click();
-    await vi.waitFor(() => expect(Number(film.style.opacity)).toBeGreaterThan(0.2));
-
-    vi.setSystemTime(Date.now() + SETTLED_MS);
-    radio.tick();
-    expect(Number(film.style.opacity)).toBeCloseTo(0.05, 3);
-  });
-
   it('rocks the clock between real time and game time', async () => {
     const { root, radio } = await mount();
     const rocker = root.querySelector<HTMLButtonElement>('.rocker')!;

@@ -72,7 +72,6 @@ export class RadioUI {
     el('span', { class: 'power-thumb' }, el('span', { class: 'power-dot' })),
   );
 
-  private readonly film = el('div', { class: 'screen-static' });
   private readonly ticks = el('div', { class: 'ticks' });
   private readonly dial = el('div', { class: 'dial' });
   private readonly marker = el('div', { class: 'marker' });
@@ -124,7 +123,6 @@ export class RadioUI {
           this.power,
         ),
         el('div', { class: 'screen' },
-          this.film,
           el('div', { class: 'screen-head' },
             el('div', { class: 'note' }, '♪'),
             this.ticks,
@@ -213,10 +211,6 @@ export class RadioUI {
     this.tip.style.transform = `translateY(${on ? 0 : 39}px)`;
     this.power.setAttribute('aria-checked', String(on));
 
-    // The display hisses over a change and settles to a faint shimmer once the
-    // channel has come up behind the click.
-    const hiss = on ? 1 - state.tune.stationGain : 0;
-    this.film.style.opacity = on ? (0.05 + 0.22 * hiss).toFixed(3) : '0';
     this.marker.style.left = on ? slotLeft((state.position - 0.5) / state.channels, -0.2) : '2.9px';
 
     const percent = Math.round(state.settings.volume * 100);
