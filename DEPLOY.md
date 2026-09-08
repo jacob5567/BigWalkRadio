@@ -227,10 +227,17 @@ server {
         add_header Cache-Control "public, max-age=31536000, immutable";
     }
 
+    # nginx ships no type for .webmanifest and would serve it as
+    # octet-stream, which browsers are entitled to refuse to parse.
+    location = /manifest.webmanifest {
+        types { application/manifest+json webmanifest; }
+        default_type application/manifest+json;
+        add_header Cache-Control "no-cache";
+    }
+
     # These change in place on every deploy, so they must not be held.
-    location = /index.html          { add_header Cache-Control "no-cache"; }
-    location = /sw.js               { add_header Cache-Control "no-cache"; }
-    location = /manifest.webmanifest { add_header Cache-Control "no-cache"; }
+    location = /index.html { add_header Cache-Control "no-cache"; }
+    location = /sw.js      { add_header Cache-Control "no-cache"; }
 
     location / {
         try_files $uri $uri/ /index.html;
