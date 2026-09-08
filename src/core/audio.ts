@@ -1,4 +1,5 @@
 import { SoundBank, type SfxAction } from './sounds';
+import { riseAt, type TuneConfig } from './tuning';
 
 export type SyncMode = 'lock' | 'free';
 
@@ -21,6 +22,11 @@ export interface VoiceTarget {
    * when the schedule is running faster than the audio.
    */
   sync: SyncMode;
+  /**
+   * True for a stream held open only so that tuning to it is quick. It is
+   * loaded and parked, never sounded, and costs nothing while it waits.
+   */
+  warm?: boolean;
 }
 
 interface Voice {
@@ -38,10 +44,16 @@ interface Voice {
 const DRIFT_TOLERANCE = 0.4;
 const RAMP = 0.08;
 const RELEASE_MS = 400;
+/** Steps in the scheduled rise: enough that the curve is smooth to the ear. */
+const RISE_STEPS = 16;
+/** How fast whatever was playing is taken down when the switch is turned. */
+const DUCK_SECONDS = 0.02;
 
 export class AudioEngine {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
+  /** The switch envelope, between the stations and the master. */
+  private tuning: GainNode | null = null;
   private readonly sounds = new SoundBank();
   private readonly voices = new Map<string, Voice>();
   private volume = 0.8;
@@ -74,6 +86,11 @@ export class AudioEngine {
       this.master = this.ctx.createGain();
       this.master.gain.value = this.volume;
       this.master.connect(this.ctx.destination);
+      // The stations pass through here; the switch sounds do not, so the click
+      // is heard while the channel behind it is still silent.
+      this.tuning = this.ctx.createGain();
+      this.tuning.gain.value = 0;
+      this.tuning.connect(this.master);
     }
     // Resume first, while still inside the gesture that asked for it.
     if (this.ctx.state === 'suspended') await this.ctx.resume();
@@ -81,6 +98,34 @@ export class AudioEngine {
     // The switch and channel noises share the master gain, so the volume wheel
     // works them along with everything else. Already fetched, so this is quick.
     await this.sounds.load(this.ctx, this.master!);
+  }
+
+  /**
+   * Works the switch. The whole envelope is scheduled here and then left alone:
+   * sampling it on the scheduler's tick would quantise the rise to the tick
+   * rate, which is far coarser than the fade.
+   */
+  tune(onStation: boolean, config: TuneConfig): void {
+    const ctx = this.ctx;
+    const gain = this.tuning?.gain;
+    if (!ctx || !gain) return;
+
+    const now = ctx.currentTime;
+    const hold = Math.max(0, config.holdMs) / 1000;
+    const fade = Math.max(0, config.fadeMs) / 1000;
+    const duck = Math.min(DUCK_SECONDS, hold);
+
+    gain.cancelScheduledValues(now);
+    gain.setValueAtTime(gain.value, now);
+    if (duck > 0) gain.linearRampToValueAtTime(0, now + duck);
+    else gain.setValueAtTime(0, now);
+    if (!onStation) return;
+
+    gain.setValueAtTime(0, now + hold);
+    for (let i = 1; i <= RISE_STEPS; i++) {
+      const x = i / RISE_STEPS;
+      gain.linearRampToValueAtTime(riseAt(x), now + hold + fade * x);
+    }
   }
 
   /** Collects the sound effects ahead of the first press. */
@@ -138,7 +183,8 @@ export class AudioEngine {
       voice.el.src = url;
       voice.el.load();
       this.failed.delete(target.trackId);
-      this.seek(voice, target.offsetSec);
+      // No seek here: whichever branch below owns this stream does it. Seeking
+      // twice makes the browser fetch the head of the file for nothing.
     }
 
     if (!target.playing) {
@@ -149,10 +195,14 @@ export class AudioEngine {
     }
 
     if (!voice.started || voice.el.paused) {
-      // Starting for real, so put it exactly where the schedule wants it.
-      if (!voice.started) this.seek(voice, target.offsetSec);
+      // Seek first, sound second. Playing from the top and then jumping makes
+      // the browser open the file, throw the buffer away and open it again.
       voice.started = true;
-      if (this.running) void voice.el.play().catch(() => {});
+      const epoch = voice.epoch;
+      this.seek(voice, target.offsetSec, () => {
+        if (voice.epoch !== epoch || voice.releasing || !this.running) return;
+        void voice.el.play().catch(() => {});
+      });
       return;
     }
 
@@ -163,7 +213,8 @@ export class AudioEngine {
     }
   }
 
-  private seek(voice: Voice, offsetSec: number): void {
+  /** Puts a stream where the schedule wants it, then calls `done` once it is there. */
+  private seek(voice: Voice, offsetSec: number, done?: () => void): void {
     const apply = () => {
       const limit = Number.isFinite(voice.el.duration) ? voice.el.duration - 0.05 : Infinity;
       try {
@@ -171,6 +222,9 @@ export class AudioEngine {
       } catch {
         /* element not seekable yet; the next tick will retry */
       }
+      if (!done) return;
+      if (voice.el.seeking) voice.el.addEventListener('seeked', done, { once: true });
+      else done();
     };
     if (voice.el.readyState >= 1) apply();
     else voice.el.addEventListener('loadedmetadata', apply, { once: true });
@@ -197,7 +251,7 @@ export class AudioEngine {
     gain.gain.value = 0;
 
     source.connect(gain);
-    gain.connect(this.master!);
+    gain.connect(this.tuning ?? this.master!);
 
     const voice: Voice = { el, source, gain, trackId: null, epoch: 0, releasing: false, started: false };
     this.voices.set(key, voice);
@@ -225,6 +279,8 @@ export class AudioEngine {
     for (const id of [...this.voices.keys()]) this.release(id);
     void this.ctx?.close();
     this.ctx = null;
+    this.tuning = null;
+    this.master = null;
     this.running = false;
   }
 }

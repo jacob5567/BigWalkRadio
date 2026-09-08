@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 
 import { Catalog } from '../src/core/catalog';
 import { setKV } from '../src/core/db';
 import { Radio } from '../src/core/radio';
+import type { VoiceTarget } from '../src/core/audio';
 import { DEFAULT_TUNE } from '../src/core/tuning';
 import { RadioUI } from '../src/app/ui';
 import { installBrowserStubs, mediaSession, mediaSessionHandlers, resetStorage } from './browser-stubs';
@@ -29,6 +30,10 @@ describe('the switch', () => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
   });
+
+  /** The tuned station's own streams, without the neighbours held ready. */
+  const onAir = (update: { mock: { lastCall?: [readonly VoiceTarget[]] | undefined } }) =>
+    (update.mock.lastCall?.[0] ?? []).filter((t) => !t.warm);
 
   /** Move past the click so the channel is fully up. */
   const settle = () => {
@@ -157,9 +162,11 @@ describe('the switch', () => {
   });
 
   it('holds the channel silent until the click has passed', async () => {
-    const update = vi.spyOn(radio.engine, 'update');
+    const tune = vi.spyOn(radio.engine, 'tune');
     await radio.setPosition(5);
-    for (const target of update.mock.lastCall![0]) expect(target.gain).toBe(0);
+    // The hold is the engine's to keep now, scheduled in one go on its own
+    // clock rather than sampled by the tick.
+    expect(tune).toHaveBeenCalledWith(true, DEFAULT_TUNE);
   });
 
   it('hands the engine the settled channel at full gain', async () => {
@@ -167,7 +174,7 @@ describe('the switch', () => {
     const update = vi.spyOn(radio.engine, 'update');
     settle();
 
-    const targets = update.mock.lastCall![0];
+    const targets = onAir(update);
     expect(targets).toHaveLength(1);
     expect(targets[0]!.gain).toBeCloseTo(1, 6);
     expect(radio.catalog.get(targets[0]!.trackId)!.name).toBe('Leitmotif');
@@ -181,7 +188,7 @@ describe('the switch', () => {
     const update = vi.spyOn(radio.engine, 'update');
     settle();
 
-    const targets = update.mock.lastCall![0];
+    const targets = onAir(update);
     expect(targets).toHaveLength(2);
     expect(targets.map((t) => radio.catalog.get(t.trackId)!.name).sort()).toEqual(['Leitmotif', 'Motif']);
     for (const target of targets) expect(target.gain).toBeCloseTo(Math.SQRT1_2, 3);
@@ -220,7 +227,7 @@ describe('the switch', () => {
     const update = vi.spyOn(radio.engine, 'update');
     settle();
 
-    const targets = update.mock.lastCall![0];
+    const targets = onAir(update);
     const cued = targets.filter((t) => !t.playing);
     expect(cued).toHaveLength(1);
     expect(cued[0]!.gain).toBe(0);

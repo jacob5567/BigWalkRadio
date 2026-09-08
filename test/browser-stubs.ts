@@ -1,17 +1,65 @@
 import { vi } from 'vitest';
 import { closeDb } from '../src/core/db';
 
+/** One piece of automation, kept so tests can read back the whole schedule. */
+export interface ParamEvent {
+  type: 'set' | 'ramp' | 'target';
+  value: number;
+  time: number;
+  /** Time constant, for 'target' only. */
+  tc?: number;
+}
+
 /** Records what the engine asked the browser to do, without any real audio. */
 export interface FakeParam {
   value: number;
-  setTargetAtTime: (value: number, at: number, tc: number) => void;
+  /** Every automation call since the parameter was made, in order. */
+  events: ParamEvent[];
+  setValueAtTime: (value: number, at: number) => FakeParam;
+  linearRampToValueAtTime: (value: number, at: number) => FakeParam;
+  setTargetAtTime: (value: number, at: number, tc: number) => FakeParam;
+  cancelScheduledValues: (at: number) => FakeParam;
+  /** What the schedule reaches at `time`, without anything else being called. */
+  at: (time: number) => number;
 }
 
 const param = (value = 0): FakeParam => {
   const p: FakeParam = {
     value,
-    setTargetAtTime: (next) => {
+    events: [],
+    setValueAtTime: (next, at) => {
+      p.events.push({ type: 'set', value: next, time: at });
       p.value = next;
+      return p;
+    },
+    linearRampToValueAtTime: (next, at) => {
+      p.events.push({ type: 'ramp', value: next, time: at });
+      return p;
+    },
+    setTargetAtTime: (next, at, tc) => {
+      p.events.push({ type: 'target', value: next, time: at, tc });
+      p.value = next;
+      return p;
+    },
+    cancelScheduledValues: (at) => {
+      p.events = p.events.filter((e) => e.time < at);
+      return p;
+    },
+    // Enough of the automation model to check a scheduled envelope: exact for
+    // steps and linear ramps, and settled for the exponential approach.
+    at: (time) => {
+      let held = value;
+      let heldAt = Number.NEGATIVE_INFINITY;
+      for (const event of [...p.events].sort((a, b) => a.time - b.time)) {
+        if (event.time > time) {
+          if (event.type !== 'ramp') return held;
+          const span = event.time - heldAt;
+          return span <= 0 ? event.value : held + (event.value - held) * ((time - heldAt) / span);
+        }
+        held = event.value;
+        heldAt = event.time;
+      }
+      return held;
     },
   };
   return p;
@@ -74,6 +122,54 @@ export class FakeAudioContext {
 /** Every media element built since the stubs were installed, in order. */
 export const createdAudio: HTMLAudioElement[] = [];
 
+/**
+ * What the engine asked of each element, in order: `open <url>`, `seek <n>`,
+ * `play`, `pause`. This is the closest thing to a latency measurement that
+ * runs without a network -- each `open` is a file the browser has to go and
+ * find, and a `play` before a `seek` means it will have to find it twice.
+ */
+const mediaOps = new WeakMap<HTMLMediaElement, string[]>();
+
+export function opsOf(element: HTMLMediaElement): readonly string[] {
+  return mediaOps.get(element) ?? [];
+}
+
+/** Every op across every element, for counting cold opens over a whole change. */
+export function allOps(): string[] {
+  return createdAudio.flatMap((element) => [...opsOf(element)]);
+}
+
+function record(element: HTMLMediaElement, op: string): void {
+  const list = mediaOps.get(element);
+  if (list) list.push(op);
+  else mediaOps.set(element, [op]);
+}
+
+/**
+ * Whether new elements come up cold, the way one does over a network: no
+ * metadata until `deliverMetadata`, and no seek landing until `completeSeek`.
+ * Off by default, so tests that don't care about loading stay simple.
+ */
+let coldMedia = false;
+const readyStates = new WeakMap<HTMLMediaElement, number>();
+const seekings = new WeakMap<HTMLMediaElement, boolean>();
+
+export function useColdMedia(): void {
+  coldMedia = true;
+}
+
+/** The element has its headers: it now knows its duration and can be seeked. */
+export function deliverMetadata(element: HTMLMediaElement): void {
+  readyStates.set(element, 1);
+  element.dispatchEvent(new Event('loadedmetadata'));
+}
+
+/** The seek the engine asked for has landed. */
+export function completeSeek(element: HTMLMediaElement): void {
+  seekings.set(element, false);
+  element.dispatchEvent(new Event('seeked'));
+}
+
 /** Media key handlers the page has registered, by action name. */
 export const mediaSessionHandlers = new Map<string, (() => void) | null>();
 
@@ -95,6 +191,7 @@ export const mediaSession = {
  * Media elements get a settable currentTime and a readyState that reports ready.
  */
 export function installBrowserStubs(): void {
+  coldMedia = false;
   vi.stubGlobal('AudioContext', FakeAudioContext);
   // The engine's elements are never put in the document, so keep a register of
   // them; tests have no other way to reach them.
@@ -121,15 +218,27 @@ export function installBrowserStubs(): void {
 
   const proto = window.HTMLMediaElement.prototype;
   proto.play = vi.fn(async function (this: HTMLMediaElement) {
+    record(this, 'play');
     Object.defineProperty(this, 'paused', { value: false, configurable: true });
   });
   proto.pause = vi.fn(function (this: HTMLMediaElement) {
+    record(this, 'pause');
     Object.defineProperty(this, 'paused', { value: true, configurable: true });
   });
   proto.load = vi.fn();
-  Object.defineProperty(proto, 'readyState', { value: 4, configurable: true });
+  Object.defineProperty(proto, 'readyState', {
+    configurable: true,
+    get(this: HTMLMediaElement) {
+      return readyStates.get(this) ?? (coldMedia ? 0 : 4);
+    },
+  });
   Object.defineProperty(proto, 'duration', { value: 300, configurable: true });
-  Object.defineProperty(proto, 'seeking', { value: false, configurable: true });
+  Object.defineProperty(proto, 'seeking', {
+    configurable: true,
+    get(this: HTMLMediaElement) {
+      return seekings.get(this) ?? false;
+    },
+  });
 
   // Per element, so two copies of one track can sit at different points.
   const positions = new WeakMap<HTMLMediaElement, number>();
@@ -139,9 +248,14 @@ export function installBrowserStubs(): void {
       return positions.get(this) ?? 0;
     },
     set(this: HTMLMediaElement, value: number) {
+      record(this, `seek ${value}`);
       positions.set(this, value);
+      if (coldMedia) seekings.set(this, true);
     },
   });
+
+  // Setting src is the expensive one: it sends the browser off to find a file.
+  patchSrc(proto);
 
   // jsdom implements no pointer capture, which the volume wheel takes hold of.
   const element = window.Element.prototype as unknown as Record<string, unknown>;
@@ -168,6 +282,24 @@ export function installBrowserStubs(): void {
       value: () => `id-${Math.random().toString(16).slice(2)}`,
     });
   }
+}
+
+/** Wrapped once for the run: redefining it per install would nest the wrappers. */
+let srcPatched = false;
+function patchSrc(proto: HTMLMediaElement): void {
+  if (srcPatched) return;
+  srcPatched = true;
+  const original = Object.getOwnPropertyDescriptor(proto, 'src')!;
+  Object.defineProperty(proto, 'src', {
+    configurable: true,
+    get(this: HTMLMediaElement) {
+      return original.get!.call(this);
+    },
+    set(this: HTMLMediaElement, value: string) {
+      record(this, `open ${value}`);
+      original.set!.call(this, value);
+    },
+  });
 }
 
 /** Wipe stored settings, stations and audio so each test starts on a fresh radio. */

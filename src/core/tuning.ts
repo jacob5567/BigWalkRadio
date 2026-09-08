@@ -22,6 +22,14 @@ export interface TuneState {
 export const OFF = 0;
 
 /**
+ * How far the channel has come up, `x` of the way through the fade. The engine
+ * schedules this same curve on the audio clock, so the two agree.
+ */
+export function riseAt(x: number): number {
+  return Math.sin(Math.min(1, Math.max(0, x)) * (Math.PI / 2));
+}
+
+/**
  * Where a change has got to, `elapsedMs` after the switch was turned.
  * `onStation` is false at position 0, where nothing comes up behind the click.
  */
@@ -40,7 +48,7 @@ export function readTuning(
   }
 
   const x = (t - config.holdMs) / config.fadeMs;
-  return { stationGain: onStation ? Math.sin(x * (Math.PI / 2)) : 0, settling: true };
+  return { stationGain: onStation ? riseAt(x) : 0, settling: true };
 }
 
 /** Next position on the switch, wrapping through off. */

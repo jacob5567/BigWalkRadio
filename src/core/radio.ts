@@ -150,6 +150,10 @@ export class Radio {
       if (this.disposed) return;
     }
 
+    // The whole rise is handed to the audio clock now, in one go, rather than
+    // being sampled on the tick -- the tick is coarser than the fade.
+    this.engine.tune(next !== OFF, this.tuneConfig);
+
     const action: SfxAction = next === OFF ? 'off' : from === OFF ? 'on' : 'channelChange';
     this.soundUntilMs = Date.now() + this.engine.playSound(action) * 1000;
     this.tick();
@@ -248,7 +252,9 @@ export class Radio {
           stationId: state.onAir!.station.id,
           trackId: layer.track.id,
           offsetSec: layer.offsetSec,
-          gain: state.tune.stationGain * layer.blend,
+          // The switch envelope lives on the engine's own clock now; this
+          // carries only the daypart blend.
+          gain: layer.blend,
           playing: layer.playing,
           sync,
         }))
@@ -257,7 +263,7 @@ export class Radio {
         .sort((a, b) => Number(b.playing) - Number(a.playing) || b.gain - a.gain)
         .slice(0, MAX_VOICES);
 
-      this.engine.update(targets);
+      this.engine.update([...targets, ...this.warmTargets(state, sync)]);
       this.updateMediaSession(state);
 
       // Once the click of switching off has finished, let the audio hardware
@@ -267,6 +273,48 @@ export class Radio {
     }
 
     this.emit(state);
+  }
+
+  /**
+   * The channels either side, opened and parked but never sounded. Tuning to
+   * one of them then reuses a stream that is already on the file, instead of
+   * opening it and hunting for the offset from cold -- which over a network,
+   * in a format with no seek index, is most of what makes a change feel slow.
+   */
+  private warmTargets(state: RadioState, sync: SyncMode): VoiceTarget[] {
+    const count = this.stations.length;
+    if (state.position === OFF || count < 2) return [];
+
+    const out: VoiceTarget[] = [];
+    const seen = new Set<string>();
+    for (const step of [1, -1]) {
+      const position = ((state.position - 1 + step + count) % count) + 1;
+      const station = this.stationAt(position);
+      if (!station || position === state.position) continue;
+
+      const layers = resolveStationLayers(station, state.reading, this.catalog.map, {
+        timelineScale: this.timelineScale(state.reading),
+        blendSeconds: this.settings.blendSeconds,
+        seamSeconds: this.settings.seamSeconds,
+      });
+      const layer = layers.find((l) => l.role === 'current' && l.playing);
+      if (!layer) continue;
+
+      const key = `${station.id}::${layer.instance.program.id}::${layer.pass}::${layer.trackIndex}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({
+        key,
+        stationId: station.id,
+        trackId: layer.track.id,
+        offsetSec: layer.offsetSec,
+        gain: 0,
+        playing: false,
+        sync,
+        warm: true,
+      });
+    }
+    return out;
   }
 
   private startTicking(): void {

@@ -141,6 +141,35 @@ are settings rather than controls: they live in `DEFAULT_SETTINGS`, and a
 browser that has stored a value of its own keeps it over any change to the
 default.
 
+### Tuning in quickly
+
+Because the broadcast is a function of the clock, tuning in almost never means
+playing a file from the start: it means starting a few minutes into one. Ogg
+carries no seek index, so a browser asked to do that from cold has to open the
+file, read its headers, then bisect it with a series of range requests before
+it can decode a note. Over a network that is most of what makes a change feel
+slow, so three things are arranged to avoid it.
+
+The channels either side of the one you are on are held open, cued and paused,
+never sounded. Stepping to one reuses the stream that is already on the file
+instead of opening it from cold; stepping back does the same, because the
+channel you left becomes a neighbour in its turn. Only a jump of more than one
+channel pays the full cost.
+
+A stream is seeked before it is played, not after. Calling `play()` first makes
+the browser buffer from the top of the file and then throw that away when the
+seek lands, which is two trips for one channel.
+
+The rise is scheduled on the audio clock in one go at the moment of the switch,
+rather than sampled on the scheduler's tick. The tick is 250 ms and the fade is
+200 ms, so sampling one with the other used to stretch a 320 ms envelope out to
+something nearer half a second.
+
+`test/latency.test.ts` holds all three to account. It measures rather than
+times: how many times the browser was sent to find a file, in what order it was
+asked to seek and play, and what the tuning gain reaches at a given moment —
+all exact, and none of it needing a network or a speaker.
+
 ## The controls
 
 The unit is a single screen. A lamp and a power switch sit to the left of the
