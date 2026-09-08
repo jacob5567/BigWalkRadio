@@ -423,6 +423,8 @@ describe('the catalog behind it', () => {
 });
 
 describe('RadioUI', () => {
+  let teardown: (() => void)[] = [];
+
   beforeEach(async () => {
     installBrowserStubs();
     await resetStorage();
@@ -430,7 +432,10 @@ describe('RadioUI', () => {
     vi.setSystemTime(START);
   });
 
+  // Shut the radio down before the stubs go, not after: afterEach runs ahead
+  // of onTestFinished, so anything still in flight would land on a bare global.
   afterEach(() => {
+    for (const stop of teardown.splice(0)) stop();
     vi.useRealTimers();
     vi.unstubAllGlobals();
   });
@@ -439,47 +444,106 @@ describe('RadioUI', () => {
     const root = document.createElement('div');
     document.body.append(root);
     const radio = new Radio();
-    onTestFinished(() => radio.dispose());
-    new RadioUI(radio, root).mount();
+    const ui = new RadioUI(radio, root);
+    teardown.push(() => {
+      ui.dispose();
+      radio.dispose();
+    });
+    ui.mount();
     await radio.init();
-    const knob = root.querySelector<HTMLButtonElement>('.knob')!;
-    return { root, radio, knob };
+    const unit = root.querySelector<HTMLElement>('.unit')!;
+    const power = root.querySelector<HTMLButtonElement>('.power')!;
+    const speaker = root.querySelector<HTMLButtonElement>('.speaker-rim')!;
+    return { root, radio, unit, power, speaker };
   }
 
-  it('opens showing the switch at off', async () => {
-    const { root, knob } = await mount();
-    expect(root.querySelector('.position-number')!.textContent).toBe('0');
-    expect(root.querySelector('.position-label')!.textContent).toBe('off');
-    expect(knob.classList.contains('off')).toBe(true);
+  const marker = (root: HTMLElement) => root.querySelector<HTMLElement>('.marker')!.style.left;
+
+  it('opens dark, with the switch off and the marker parked', async () => {
+    const { root, unit, power } = await mount();
+    expect(unit.classList.contains('on')).toBe(false);
+    expect(power.getAttribute('aria-checked')).toBe('false');
+    expect(marker(root)).toBe('2.9px');
   });
 
-  it('offers a wheel, a switch, two steppers and the cycle button', async () => {
+  it('draws a tick and a stem for every channel', async () => {
+    const { root, radio } = await mount();
+    expect(root.querySelectorAll('.tick')).toHaveLength(radio.channelCount);
+    expect(root.querySelectorAll('.stem')).toHaveLength(radio.channelCount);
+    expect(root.querySelector('.tick-num')!.textContent).toBe('01');
+    expect(root.querySelector<HTMLElement>('.ticks')!.style.getPropertyValue('--channels'))
+      .toBe(String(radio.channelCount));
+  });
+
+  it('offers a knob, a switch, a rocker, two seek buttons and the grille', async () => {
     const { root } = await mount();
     expect(root.querySelectorAll('.wheel')).toHaveLength(1);
     expect(root.querySelectorAll('.power')).toHaveLength(1);
+    expect(root.querySelectorAll('.rocker')).toHaveLength(1);
     expect(root.querySelectorAll('.step')).toHaveLength(2);
-    expect(root.querySelectorAll('.knob')).toHaveLength(1);
+    expect(root.querySelectorAll('button.speaker-rim')).toHaveLength(1);
   });
 
-  it('turns on and off with the switch', async () => {
-    const { root, radio } = await mount();
-    const power = root.querySelector<HTMLButtonElement>('.power')!;
-    expect(power.getAttribute('aria-checked')).toBe('false');
+  it('cycles a channel per press of the speaker grille', async () => {
+    const { radio, speaker } = await mount();
+    speaker.click();
+    await vi.waitFor(() => expect(radio.snapshot().position).toBe(1));
+    speaker.click();
+    await vi.waitFor(() => expect(radio.snapshot().position).toBe(2));
+  });
+
+  it('wraps the grille back round to off after the last channel', async () => {
+    const { radio, unit, speaker } = await mount();
+    for (let i = 1; i <= radio.channelCount; i++) {
+      speaker.click();
+      await vi.waitFor(() => expect(radio.snapshot().position).toBe(i));
+    }
+    speaker.click();
+    await vi.waitFor(() => expect(radio.snapshot().position).toBe(0));
+    expect(unit.classList.contains('on')).toBe(false);
+  });
+
+  it('says what the grille will do next, since nothing on it is labelled', async () => {
+    const { radio, speaker } = await mount();
+    expect(speaker.getAttribute('aria-label')).toBe(`Radio off. Press for channel 1 of ${radio.channelCount}.`);
+
+    speaker.click();
+    await vi.waitFor(() =>
+      expect(speaker.getAttribute('aria-label')).toContain(radio.getStations()[0]!.name));
+    expect(speaker.getAttribute('aria-label')).toContain('Press for the next.');
+  });
+
+  it('turns on and off with the switch, and lights the lamp with it', async () => {
+    const { root, radio, unit, power } = await mount();
+    const lamp = root.querySelector<HTMLElement>('.lamp-glow')!;
+    expect(lamp.style.opacity).toBe('0');
 
     power.click();
     await vi.waitFor(() => expect(power.getAttribute('aria-checked')).toBe('true'));
+    expect(unit.classList.contains('on')).toBe(true);
+    expect(lamp.style.opacity).toBe('1');
+    expect(marker(root)).not.toBe('2.9px');
 
     power.click();
     await vi.waitFor(() => expect(power.getAttribute('aria-checked')).toBe('false'));
     expect(radio.snapshot().power).toBe(false);
+    expect(lamp.style.opacity).toBe('0');
   });
 
-  it('greys out the steppers until there is something to step between', async () => {
-    const { root, radio } = await mount();
+  it('extends the antenna when it comes on', async () => {
+    const { root, power } = await mount();
+    const mast = root.querySelector<HTMLElement>('.antenna-mast')!;
+    expect(mast.style.transform).toBe('scaleY(0.3)');
+    power.click();
+    await vi.waitFor(() => expect(mast.style.transform).toBe('scaleY(1)'));
+  });
+
+  it('greys out the seek buttons until there is something to step between', async () => {
+    const { root, radio, power } = await mount();
     const [back, forward] = [...root.querySelectorAll<HTMLButtonElement>('.step')];
     expect(back!.disabled).toBe(true);
 
-    root.querySelector<HTMLButtonElement>('.power')!.click();
+    power.click();
     await vi.waitFor(() => expect(back!.disabled).toBe(false));
 
     forward!.click();
@@ -488,30 +552,62 @@ describe('RadioUI', () => {
     await vi.waitFor(() => expect(radio.snapshot().position).toBe(1));
   });
 
-  it('advances a channel per press and says what is on', async () => {
-    const { root, radio, knob } = await mount();
-    knob.click();
-    await vi.waitFor(() => expect(root.querySelector('.position-number')!.textContent).toBe('1'));
+  it('moves the marker along the dial as the channel changes', async () => {
+    const { root, radio, power } = await mount();
+    power.click();
+    await vi.waitFor(() => expect(radio.snapshot().position).toBe(1));
+    const first = marker(root);
 
-    expect(root.querySelector('.position-label')!.textContent).toBe(radio.getStations()[0]!.name);
-    // Still inside the static, so it must not claim a track yet.
-    expect(root.querySelector('.daypart')!.textContent).toBe('tuning…');
+    root.querySelectorAll<HTMLButtonElement>('.step')[1]!.click();
+    await vi.waitFor(() => expect(marker(root)).not.toBe(first));
+  });
+
+  it('hisses over a change and settles once the channel is up', async () => {
+    const { root, radio, power } = await mount();
+    const film = root.querySelector<HTMLElement>('.screen-static')!;
+    power.click();
+    await vi.waitFor(() => expect(Number(film.style.opacity)).toBeGreaterThan(0.2));
 
     vi.setSystemTime(Date.now() + SETTLED_MS);
     radio.tick();
-    expect(root.querySelector('.track')!.textContent).toBeTruthy();
-    expect(root.querySelector('.elapsed')!.textContent).toContain('/');
+    expect(Number(film.style.opacity)).toBeCloseTo(0.05, 3);
   });
 
-  it('wraps back to off after the last channel', async () => {
-    const { root, radio, knob } = await mount();
-    for (let i = 0; i < radio.channelCount + 1; i++) {
-      const expected = String((i + 1) % (radio.channelCount + 1));
-      knob.click();
-      await vi.waitFor(() =>
-        expect(root.querySelector('.position-number')!.textContent).toBe(expected));
-    }
-    expect(root.querySelector('.position-number')!.textContent).toBe('0');
-    expect(root.querySelector('.position-label')!.textContent).toBe('off');
+  it('rocks the clock between real time and game time', async () => {
+    const { root, radio } = await mount();
+    const rocker = root.querySelector<HTMLButtonElement>('.rocker')!;
+    expect(rocker.classList.contains('game')).toBe(false);
+    expect(rocker.getAttribute('aria-checked')).toBe('false');
+
+    rocker.click();
+    expect(radio.getSettings().mode).toBe('game');
+    expect(rocker.classList.contains('game')).toBe(true);
+    expect(rocker.getAttribute('aria-checked')).toBe('true');
+
+    rocker.click();
+    expect(radio.getSettings().mode).toBe('real');
+  });
+
+  it('reads the volume off the knob and shows it in the tray', async () => {
+    const { root, radio } = await mount();
+    const wheel = root.querySelector<HTMLElement>('.wheel')!;
+    wheel.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', cancelable: true }));
+
+    expect(radio.getSettings().volume).toBe(1);
+    expect(root.querySelector('.vol-num')!.textContent).toBe('100');
+    expect(root.querySelector<HTMLElement>('.vol-fill')!.style.width).toBe('100%');
+  });
+
+  it('says what is on for anyone who cannot see the dial', async () => {
+    const { root, radio, power } = await mount();
+    const said = root.querySelector<HTMLElement>('.sr-only')!;
+    expect(said.textContent).toBe('Radio off');
+
+    power.click();
+    await vi.waitFor(() => expect(said.textContent).toContain('tuning'));
+
+    vi.setSystemTime(Date.now() + SETTLED_MS);
+    radio.tick();
+    expect(said.textContent).toContain(radio.getStations()[0]!.name);
   });
 });

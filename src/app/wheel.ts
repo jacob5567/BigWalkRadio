@@ -6,6 +6,10 @@ const START_ANGLE = -135;
 const KEY_STEP = 0.05;
 const KEY_PAGE = 0.2;
 const SCROLL_STEP = 0.04;
+/** Ridges around the rim, so the turn is visible from any angle. */
+const RIDGES = 16;
+/** How far out from the centre they sit, in the knob's own pixels. */
+const RIDGE_RADIUS = 27;
 
 export interface WheelOptions {
   label: string;
@@ -27,6 +31,18 @@ function angleDelta(to: number, from: number): number {
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
+/** The ridged rim and the pointer, which turn together with the value. */
+function face(): HTMLElement[] {
+  const parts: HTMLElement[] = [];
+  for (let i = 0; i < RIDGES; i++) {
+    const ridge = el('div', { class: 'wheel-ridge' });
+    ridge.style.transform = `rotate(${((i / RIDGES) * 360).toFixed(1)}deg) translateY(-${RIDGE_RADIUS}px)`;
+    parts.push(ridge);
+  }
+  parts.push(el('div', { class: 'wheel-pointer' }));
+  return parts;
+}
+
 /**
  * A volume wheel you turn rather than a slider you drag along. Rotating it
  * through 270 degrees runs from silence to full; it also takes the scroll
@@ -35,8 +51,7 @@ const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
  */
 export class Wheel {
   readonly el: HTMLElement;
-  private readonly indicator = el('div', { class: 'wheel-indicator' });
-  private readonly readout = el('div', { class: 'wheel-readout' });
+  private readonly indicator = el('div', { class: 'wheel-indicator' }, ...face());
   private value = 0;
   private lastAngle = 0;
   private turning = false;
@@ -49,7 +64,7 @@ export class Wheel {
       'aria-label': options.label,
       'aria-valuemin': '0',
       'aria-valuemax': '100',
-    }, this.indicator, this.readout);
+    }, this.indicator);
 
     this.el.addEventListener('pointerdown', this.onPointerDown);
     this.el.addEventListener('pointermove', this.onPointerMove);
@@ -83,7 +98,6 @@ export class Wheel {
   private render(): void {
     const percent = Math.round(this.value * 100);
     this.indicator.style.transform = `rotate(${START_ANGLE + this.value * SWEEP}deg)`;
-    this.readout.textContent = `${percent}`;
     this.el.setAttribute('aria-valuenow', String(percent));
     this.el.setAttribute('aria-valuetext', `${percent} percent`);
   }

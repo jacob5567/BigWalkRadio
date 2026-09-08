@@ -100,11 +100,11 @@ and closing the app doesn't pause anything.
 - **Game time** — a whole broadcast day in a few real minutes (24 by default),
   so the dayparts turn over quickly. The music still plays at normal speed; it
   is the schedule that accelerates. There's a setting to compress the track
-  timeline as well, which chops the songs.
+  timeline as well, which chops the songs; it isn't on the face, and defaults
+  to off.
 
 Where two dayparts meet, the outgoing track keeps playing and fades under the
-incoming one on an equal-power crossfade. The blend length is adjustable on
-screen.
+incoming one on an equal-power crossfade, eight seconds long by default.
 
 ### Seams
 
@@ -120,9 +120,9 @@ next one is fetched and cued several seconds early so it can come in on time
 over a slow connection. A pass through the playlist is therefore one seam
 shorter than the tracks it contains, which keeps the whole thing exact.
 
-The seam is 20 ms by default and adjustable on screen. Formats differ in how
-much they need it — measured by decoding each back to PCM and counting samples
-against a 4:41 track:
+The seam is 20 ms by default. Formats differ in how much they need it —
+measured by decoding each back to PCM and counting samples against a 4:41
+track:
 
 | Format | Padding per loop | Size | |
 | --- | --- | --- | --- |
@@ -136,36 +136,44 @@ Ogg is the reason 20 ms is enough. With MP3 the seam has ~29 ms of inserted
 silence to cover before it can even start hiding the restart.
 
 Even with a gapless format the overlap is worth keeping, because the restart
-itself isn't sample-accurate. Changing the default only affects a browser that
-hasn't been given a value of its own: the setting is remembered per browser
-once it has been touched on screen.
+itself isn't sample-accurate. The seam, the blend and the length of a game day
+are settings rather than controls: they live in `DEFAULT_SETTINGS`, and a
+browser that has stored a value of its own keeps it over any change to the
+default.
 
 ## The controls
 
-There are four ways in:
+The unit is a single screen. A lamp and a power switch sit to the left of the
+display, which shows a lit tick per channel and a red marker on the tuning
+dial; the speaker fills the middle, and a tray along the bottom holds the rest:
 
-- a **wheel** for volume — turn it, scroll it, or use the arrow keys
+- a **volume knob** — turn it, scroll it, or use the arrow keys
 - an **on/off switch**, which returns to the channel last listened to
-- **forward and back buttons**, which wrap around the channels and do nothing
-  while the radio is off, since the switch owns that
-- a **single button** that clicks on through each channel in turn and then off
-  again
+- **seek buttons**, which wrap around the channels and do nothing while the
+  radio is off, since the switch owns that
+- a **rocker** switching the clock between real time and game time
 
-The same four are available from outside the page: **play** and **pause** work
-the on/off switch, and **previous** and **next track** step between channels —
-from the lock screen, a headphone button, a Bluetooth remote or the keyboard's
-media keys. Stop counts as off. Like the on-screen steppers, the track buttons
-do nothing while the radio is off — and switching off pauses everything, so the
-platform drops the now-playing widget and there is nothing left to press. That
-is expected: turning the radio back on is done in the app.
+The **speaker grille** is a button too: pressing it clicks on through each
+channel in turn and then round to off again — the whole radio worked from one
+place, without aiming at anything small.
 
-They all move the same thing underneath: one position, where 0 is off and
-1…n select a channel. So every change, from whichever control, is covered by
-the radio's own click, which the incoming channel then comes up under — nothing
-ever cuts straight from one track to another. Switching on, switching off and
-changing channel each have several takes to choose between, picked at random
-but never the same one twice running, so working the switch doesn't sound like
-one recording on repeat.
+The switch and the seek buttons are also available from outside the page:
+**play** and **pause** work the on/off switch, and **previous** and **next
+track** step between channels — from the lock screen, a headphone button, a
+Bluetooth remote or the keyboard's media keys. Stop counts as off. Like the
+seek buttons on screen, the track buttons do nothing while the radio is off —
+and switching off pauses everything, so the platform drops the now-playing
+widget and there is nothing left to press. That is expected: turning the radio
+back on is done in the app.
+
+The switch, the seek buttons and the grille all move the same thing underneath:
+one position, where 0 is off and 1…n select a channel. So every change, from
+whichever control, is covered by the radio's own click, which the incoming
+channel then comes up under — nothing ever cuts straight from one track to
+another.
+Switching on, switching off and changing channel each have several takes to
+choose between, picked at random but never the same one twice running, so
+working the switch doesn't sound like one recording on repeat.
 
 The radio always opens switched off. A browser won't start audio without a
 press, so a remembered position could only ever be a lie. The channel it was
