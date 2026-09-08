@@ -29,6 +29,8 @@ npm run sim -- --day         # every daypart, its window and loop count
 npm run sim -- --watch       # live
 ```
 
+To put it on a server, see [DEPLOY.md](DEPLOY.md).
+
 ## Providing the music
 
 Buy the soundtrack from <https://aksfx.bandcamp.com/>. **Choose Ogg Vorbis**

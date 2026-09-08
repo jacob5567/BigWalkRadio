@@ -1,0 +1,52 @@
+name: Deploy
+
+# Manual only until the four secrets below exist. Uncomment the push trigger
+# once a hand-run has worked -- see DEPLOY.md, stage 3.
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      # No music on the runner, and none needed: the dial is generated from it
+      # at development time and committed as src/core/presets.ts.
+      - run: npm test
+      - run: npm run build
+
+      - name: Take the deploy key
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          KNOWN_HOSTS: ${{ secrets.KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519
+          chmod 644 ~/.ssh/known_hosts
+
+      # --delete is safe: it only ever points at app/, and the 148 MB of music
+      # lives outside it under media/.
+      - name: Send the build
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          rsync -a --delete --checksum \
+            -e 'ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes' \
+            dist/ "$USER@$HOST:/srv/bigwalkradio/app/"
