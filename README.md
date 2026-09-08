@@ -100,7 +100,7 @@ next one is fetched and cued several seconds early so it can come in on time
 over a slow connection. A pass through the playlist is therefore one seam
 shorter than the tracks it contains, which keeps the whole thing exact.
 
-The seam is 150 ms by default and adjustable on screen. Formats differ in how
+The seam is 20 ms by default and adjustable on screen. Formats differ in how
 much they need it:
 
 | Format | Padding per loop | Notes |
@@ -111,8 +111,9 @@ much they need it:
 | FLAC | none | exact, but roughly 3x the size |
 
 Even with a gapless format the overlap is worth keeping, because the restart
-itself isn't sample-accurate — but it can be turned down or off once you've
-listened.
+itself isn't sample-accurate. Changing the default only affects a browser that
+hasn't been given a value of its own: the setting is remembered per browser
+once it has been touched on screen.
 
 ## The controls
 

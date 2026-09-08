@@ -185,8 +185,11 @@ export function programTracks(program: Program, tracks: ReadonlyMap<string, Trac
  * a track gives way to itself. Repeating a track by restarting it leaves an
  * audible gap: media elements don't restart sample-accurately, and lossy
  * formats pad both ends of the file. Overlapping the seam hides both.
+ *
+ * Short enough to be inaudible against tracks written to loop, and to alter
+ * the music as little as possible while still covering the join.
  */
-export const DEFAULT_SEAM_SECONDS = 0.15;
+export const DEFAULT_SEAM_SECONDS = 0.02;
 
 /** How far ahead the next track is fetched and cued. */
 const LEAD_SECONDS = 8;

@@ -15,7 +15,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Alba",
         "startHour": 5.383333,
         "trackIds": [
-          "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 01 -5-23am- Alba.mp3"
+          "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 01 -5-23am- Alba.ogg"
         ]
       },
       {
@@ -23,7 +23,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Midi",
         "startHour": 11.7,
         "trackIds": [
-          "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 02 -11-42am- Midi.mp3"
+          "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 02 -11-42am- Midi.ogg"
         ]
       },
       {
@@ -31,7 +31,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Terra",
         "startHour": 16.666667,
         "trackIds": [
-          "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 03 -4-40pm- Terra.mp3"
+          "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 03 -4-40pm- Terra.ogg"
         ]
       },
       {
@@ -39,7 +39,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Glomo",
         "startHour": 22.85,
         "trackIds": [
-          "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 04 -10-51pm- Glomo.mp3"
+          "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 04 -10-51pm- Glomo.ogg"
         ]
       }
     ]
@@ -55,7 +55,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Andante",
         "startHour": 4.8,
         "trackIds": [
-          "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 01 -4-48am- Andante.mp3"
+          "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 01 -4-48am- Andante.ogg"
         ]
       },
       {
@@ -63,7 +63,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Sleigh Bells",
         "startHour": 10.133333,
         "trackIds": [
-          "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 02 -10-08am- Sleigh Bells.mp3"
+          "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 02 -10-08am- Sleigh Bells.ogg"
         ]
       },
       {
@@ -71,7 +71,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Vox Humana",
         "startHour": 22.25,
         "trackIds": [
-          "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 03 -10-15pm- Vox Humana.mp3"
+          "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 03 -10-15pm- Vox Humana.ogg"
         ]
       }
     ]
@@ -87,7 +87,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Dawn",
         "startHour": 2.833333,
         "trackIds": [
-          "music/aksfx - Radio- Fourth Space (Original Music from Big Walk)/aksfx - Radio- Fourth Space (Original Music from Big Walk) - 01 -2-50am- Dawn.mp3"
+          "music/aksfx - Radio- Fourth Space (Original Music from Big Walk)/aksfx - Radio- Fourth Space (Original Music from Big Walk) - 01 -2-50am- Dawn.ogg"
         ]
       },
       {
@@ -95,7 +95,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Dusk",
         "startHour": 17.683333,
         "trackIds": [
-          "music/aksfx - Radio- Fourth Space (Original Music from Big Walk)/aksfx - Radio- Fourth Space (Original Music from Big Walk) - 02 -5-41pm- Dusk.mp3"
+          "music/aksfx - Radio- Fourth Space (Original Music from Big Walk)/aksfx - Radio- Fourth Space (Original Music from Big Walk) - 02 -5-41pm- Dusk.ogg"
         ]
       }
     ]
@@ -111,7 +111,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Bounce",
         "startHour": 4.35,
         "trackIds": [
-          "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 03 -4-21am- Bounce.mp3"
+          "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 03 -4-21am- Bounce.ogg"
         ]
       },
       {
@@ -119,7 +119,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Whistler",
         "startHour": 9.516667,
         "trackIds": [
-          "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 04 -9-31am- Whistler.mp3"
+          "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 04 -9-31am- Whistler.ogg"
         ]
       },
       {
@@ -127,7 +127,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Journey Beat",
         "startHour": 13.333333,
         "trackIds": [
-          "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 01 -1-20pm- Journey Beat.mp3"
+          "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 01 -1-20pm- Journey Beat.ogg"
         ]
       },
       {
@@ -135,7 +135,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Holy Beat",
         "startHour": 19.55,
         "trackIds": [
-          "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 02 -7-33pm- Holy Beat.mp3"
+          "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 02 -7-33pm- Holy Beat.ogg"
         ]
       }
     ]
@@ -151,7 +151,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Motif",
         "startHour": 0,
         "trackIds": [
-          "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 01 -12-00am- Motif.mp3"
+          "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 01 -12-00am- Motif.ogg"
         ]
       },
       {
@@ -159,7 +159,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Leitmotif",
         "startHour": 7.2,
         "trackIds": [
-          "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 02 -7-12am- Leitmotif.mp3"
+          "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 02 -7-12am- Leitmotif.ogg"
         ]
       },
       {
@@ -167,7 +167,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Refrain",
         "startHour": 14.683333,
         "trackIds": [
-          "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 03 -2-41pm- Refrain.mp3"
+          "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 03 -2-41pm- Refrain.ogg"
         ]
       }
     ]
@@ -183,7 +183,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Phase i",
         "startHour": 3.933333,
         "trackIds": [
-          "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 01 -3-56am- Phase i.mp3"
+          "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 01 -3-56am- Phase i.ogg"
         ]
       },
       {
@@ -191,7 +191,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Phase ii",
         "startHour": 10.15,
         "trackIds": [
-          "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 02 -10-09am- Phase ii.mp3"
+          "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 02 -10-09am- Phase ii.ogg"
         ]
       },
       {
@@ -199,7 +199,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Phase iii",
         "startHour": 20.15,
         "trackIds": [
-          "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 03 -8-09pm- Phase iii.mp3"
+          "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 03 -8-09pm- Phase iii.ogg"
         ]
       }
     ]
@@ -215,7 +215,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Antemma",
         "startHour": 1.183333,
         "trackIds": [
-          "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 04 -1-11am- Antemma.mp3"
+          "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 04 -1-11am- Antemma.ogg"
         ]
       },
       {
@@ -223,7 +223,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Suns",
         "startHour": 7.016667,
         "trackIds": [
-          "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 05 -7-01am- Suns.mp3"
+          "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 05 -7-01am- Suns.ogg"
         ]
       },
       {
@@ -231,7 +231,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Flashes",
         "startHour": 10.75,
         "trackIds": [
-          "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 01 -10-45am- Flashes.mp3"
+          "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 01 -10-45am- Flashes.ogg"
         ]
       },
       {
@@ -239,7 +239,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Yuhyuh",
         "startHour": 15.883333,
         "trackIds": [
-          "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 02 -3-53pm- Yuhyuh.mp3"
+          "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 02 -3-53pm- Yuhyuh.ogg"
         ]
       },
       {
@@ -247,7 +247,7 @@ export const STATION_PRESETS: Station[] = [
         "name": "Electr",
         "startHour": 20.966667,
         "trackIds": [
-          "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 03 -8-58pm- Electr.mp3"
+          "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 03 -8-58pm- Electr.ogg"
         ]
       }
     ]
@@ -256,194 +256,194 @@ export const STATION_PRESETS: Station[] = [
 
 export const TRACK_CATALOG: Track[] = [
   {
-    "id": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 01 -5-23am- Alba.mp3",
+    "id": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 01 -5-23am- Alba.ogg",
     "name": "Alba",
     "duration": 237.054,
-    "src": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 01 -5-23am- Alba.mp3",
+    "src": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 01 -5-23am- Alba.ogg",
     "album": "Blueprint",
     "timeOfDayMinutes": 323
   },
   {
-    "id": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 02 -11-42am- Midi.mp3",
+    "id": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 02 -11-42am- Midi.ogg",
     "name": "Midi",
     "duration": 185.818,
-    "src": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 02 -11-42am- Midi.mp3",
+    "src": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 02 -11-42am- Midi.ogg",
     "album": "Blueprint",
     "timeOfDayMinutes": 702
   },
   {
-    "id": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 03 -4-40pm- Terra.mp3",
+    "id": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 03 -4-40pm- Terra.ogg",
     "name": "Terra",
     "duration": 232.051,
-    "src": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 03 -4-40pm- Terra.mp3",
+    "src": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 03 -4-40pm- Terra.ogg",
     "album": "Blueprint",
     "timeOfDayMinutes": 1000
   },
   {
-    "id": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 04 -10-51pm- Glomo.mp3",
+    "id": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 04 -10-51pm- Glomo.ogg",
     "name": "Glomo",
     "duration": 250.077,
-    "src": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 04 -10-51pm- Glomo.mp3",
+    "src": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 04 -10-51pm- Glomo.ogg",
     "album": "Blueprint",
     "timeOfDayMinutes": 1371
   },
   {
-    "id": "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 01 -4-48am- Andante.mp3",
+    "id": "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 01 -4-48am- Andante.ogg",
     "name": "Andante",
     "duration": 192.34,
-    "src": "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 01 -4-48am- Andante.mp3",
+    "src": "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 01 -4-48am- Andante.ogg",
     "album": "Breathwork",
     "timeOfDayMinutes": 288
   },
   {
-    "id": "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 02 -10-08am- Sleigh Bells.mp3",
+    "id": "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 02 -10-08am- Sleigh Bells.ogg",
     "name": "Sleigh Bells",
     "duration": 436.192,
-    "src": "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 02 -10-08am- Sleigh Bells.mp3",
+    "src": "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 02 -10-08am- Sleigh Bells.ogg",
     "album": "Breathwork",
     "timeOfDayMinutes": 608
   },
   {
-    "id": "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 03 -10-15pm- Vox Humana.mp3",
+    "id": "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 03 -10-15pm- Vox Humana.ogg",
     "name": "Vox Humana",
     "duration": 285.849,
-    "src": "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 03 -10-15pm- Vox Humana.mp3",
+    "src": "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 03 -10-15pm- Vox Humana.ogg",
     "album": "Breathwork",
     "timeOfDayMinutes": 1335
   },
   {
-    "id": "music/aksfx - Radio- Fourth Space (Original Music from Big Walk)/aksfx - Radio- Fourth Space (Original Music from Big Walk) - 01 -2-50am- Dawn.mp3",
+    "id": "music/aksfx - Radio- Fourth Space (Original Music from Big Walk)/aksfx - Radio- Fourth Space (Original Music from Big Walk) - 01 -2-50am- Dawn.ogg",
     "name": "Dawn",
     "duration": 539.02,
-    "src": "music/aksfx - Radio- Fourth Space (Original Music from Big Walk)/aksfx - Radio- Fourth Space (Original Music from Big Walk) - 01 -2-50am- Dawn.mp3",
+    "src": "music/aksfx - Radio- Fourth Space (Original Music from Big Walk)/aksfx - Radio- Fourth Space (Original Music from Big Walk) - 01 -2-50am- Dawn.ogg",
     "album": "Fourth Space",
     "timeOfDayMinutes": 170
   },
   {
-    "id": "music/aksfx - Radio- Fourth Space (Original Music from Big Walk)/aksfx - Radio- Fourth Space (Original Music from Big Walk) - 02 -5-41pm- Dusk.mp3",
+    "id": "music/aksfx - Radio- Fourth Space (Original Music from Big Walk)/aksfx - Radio- Fourth Space (Original Music from Big Walk) - 02 -5-41pm- Dusk.ogg",
     "name": "Dusk",
     "duration": 360.98,
-    "src": "music/aksfx - Radio- Fourth Space (Original Music from Big Walk)/aksfx - Radio- Fourth Space (Original Music from Big Walk) - 02 -5-41pm- Dusk.mp3",
+    "src": "music/aksfx - Radio- Fourth Space (Original Music from Big Walk)/aksfx - Radio- Fourth Space (Original Music from Big Walk) - 02 -5-41pm- Dusk.ogg",
     "album": "Fourth Space",
     "timeOfDayMinutes": 1061
   },
   {
-    "id": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 01 -1-20pm- Journey Beat.mp3",
+    "id": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 01 -1-20pm- Journey Beat.ogg",
     "name": "Journey Beat",
     "duration": 224.001,
-    "src": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 01 -1-20pm- Journey Beat.mp3",
+    "src": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 01 -1-20pm- Journey Beat.ogg",
     "album": "Journey Beat",
     "timeOfDayMinutes": 800
   },
   {
-    "id": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 02 -7-33pm- Holy Beat.mp3",
+    "id": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 02 -7-33pm- Holy Beat.ogg",
     "name": "Holy Beat",
     "duration": 316.299,
-    "src": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 02 -7-33pm- Holy Beat.mp3",
+    "src": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 02 -7-33pm- Holy Beat.ogg",
     "album": "Journey Beat",
     "timeOfDayMinutes": 1173
   },
   {
-    "id": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 03 -4-21am- Bounce.mp3",
+    "id": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 03 -4-21am- Bounce.ogg",
     "name": "Bounce",
     "duration": 187.24,
-    "src": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 03 -4-21am- Bounce.mp3",
+    "src": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 03 -4-21am- Bounce.ogg",
     "album": "Journey Beat",
     "timeOfDayMinutes": 261
   },
   {
-    "id": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 04 -9-31am- Whistler.mp3",
+    "id": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 04 -9-31am- Whistler.ogg",
     "name": "Whistler",
     "duration": 172.46,
-    "src": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 04 -9-31am- Whistler.mp3",
+    "src": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 04 -9-31am- Whistler.ogg",
     "album": "Journey Beat",
     "timeOfDayMinutes": 571
   },
   {
-    "id": "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 01 -12-00am- Motif.mp3",
+    "id": "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 01 -12-00am- Motif.ogg",
     "name": "Motif",
     "duration": 270.014,
-    "src": "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 01 -12-00am- Motif.mp3",
+    "src": "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 01 -12-00am- Motif.ogg",
     "album": "Lobby",
     "timeOfDayMinutes": 0
   },
   {
-    "id": "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 02 -7-12am- Leitmotif.mp3",
+    "id": "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 02 -7-12am- Leitmotif.ogg",
     "name": "Leitmotif",
     "duration": 281.31,
-    "src": "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 02 -7-12am- Leitmotif.mp3",
+    "src": "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 02 -7-12am- Leitmotif.ogg",
     "album": "Lobby",
     "timeOfDayMinutes": 432
   },
   {
-    "id": "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 03 -2-41pm- Refrain.mp3",
+    "id": "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 03 -2-41pm- Refrain.ogg",
     "name": "Refrain",
     "duration": 358.796,
-    "src": "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 03 -2-41pm- Refrain.mp3",
+    "src": "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 03 -2-41pm- Refrain.ogg",
     "album": "Lobby",
     "timeOfDayMinutes": 881
   },
   {
-    "id": "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 01 -3-56am- Phase i.mp3",
+    "id": "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 01 -3-56am- Phase i.ogg",
     "name": "Phase i",
     "duration": 224.035,
-    "src": "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 01 -3-56am- Phase i.mp3",
+    "src": "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 01 -3-56am- Phase i.ogg",
     "album": "Mallets",
     "timeOfDayMinutes": 236
   },
   {
-    "id": "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 02 -10-09am- Phase ii.mp3",
+    "id": "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 02 -10-09am- Phase ii.ogg",
     "name": "Phase ii",
     "duration": 359.985,
-    "src": "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 02 -10-09am- Phase ii.mp3",
+    "src": "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 02 -10-09am- Phase ii.ogg",
     "album": "Mallets",
     "timeOfDayMinutes": 609
   },
   {
-    "id": "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 03 -8-09pm- Phase iii.mp3",
+    "id": "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 03 -8-09pm- Phase iii.ogg",
     "name": "Phase iii",
     "duration": 315.919,
-    "src": "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 03 -8-09pm- Phase iii.mp3",
+    "src": "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 03 -8-09pm- Phase iii.ogg",
     "album": "Mallets",
     "timeOfDayMinutes": 1209
   },
   {
-    "id": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 01 -10-45am- Flashes.mp3",
+    "id": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 01 -10-45am- Flashes.ogg",
     "name": "Flashes",
     "duration": 185.958,
-    "src": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 01 -10-45am- Flashes.mp3",
+    "src": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 01 -10-45am- Flashes.ogg",
     "album": "Underground",
     "timeOfDayMinutes": 645
   },
   {
-    "id": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 02 -3-53pm- Yuhyuh.mp3",
+    "id": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 02 -3-53pm- Yuhyuh.ogg",
     "name": "Yuhyuh",
     "duration": 181.979,
-    "src": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 02 -3-53pm- Yuhyuh.mp3",
+    "src": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 02 -3-53pm- Yuhyuh.ogg",
     "album": "Underground",
     "timeOfDayMinutes": 953
   },
   {
-    "id": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 03 -8-58pm- Electr.mp3",
+    "id": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 03 -8-58pm- Electr.ogg",
     "name": "Electr",
     "duration": 152.061,
-    "src": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 03 -8-58pm- Electr.mp3",
+    "src": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 03 -8-58pm- Electr.ogg",
     "album": "Underground",
     "timeOfDayMinutes": 1258
   },
   {
-    "id": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 04 -1-11am- Antemma.mp3",
+    "id": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 04 -1-11am- Antemma.ogg",
     "name": "Antemma",
     "duration": 210.315,
-    "src": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 04 -1-11am- Antemma.mp3",
+    "src": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 04 -1-11am- Antemma.ogg",
     "album": "Underground",
     "timeOfDayMinutes": 71
   },
   {
-    "id": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 05 -7-01am- Suns.mp3",
+    "id": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 05 -7-01am- Suns.ogg",
     "name": "Suns",
-    "duration": 169.686,
-    "src": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 05 -7-01am- Suns.mp3",
+    "duration": 169.687,
+    "src": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 05 -7-01am- Suns.ogg",
     "album": "Underground",
     "timeOfDayMinutes": 421
   }
