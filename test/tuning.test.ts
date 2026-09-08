@@ -59,8 +59,10 @@ describe('readTuning', () => {
     }
   });
 
-  it("is short enough to sit under the radio's own click", () => {
-    // The recorded clicks run about 200-270ms.
-    expect(holdMs + fadeMs).toBeLessThanOrEqual(300);
+  it("holds the channel back until the radio's own click has landed", () => {
+    // The recorded clicks run about 190-270ms, so the silence sits inside the
+    // shortest of them and the channel rises across the tail of the longest.
+    expect(holdMs).toBeLessThanOrEqual(180);
+    expect(holdMs + fadeMs).toBeLessThanOrEqual(400);
   });
 });

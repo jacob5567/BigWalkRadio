@@ -10,7 +10,7 @@ export interface TuneConfig {
   fadeMs: number;
 }
 
-export const DEFAULT_TUNE: TuneConfig = { holdMs: 80, fadeMs: 200 };
+export const DEFAULT_TUNE: TuneConfig = { holdMs: 120, fadeMs: 200 };
 
 export interface TuneState {
   /** What the selected channel should be playing at, 0..1. */
