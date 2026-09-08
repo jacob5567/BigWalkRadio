@@ -4,7 +4,7 @@ Three stages, in the order you'll want them:
 
 1. [A working server on its IP](#1-a-working-server) — proves the files are in
    place and nginx serves them.
-2. [radio.sevenstack.net, with TLS](#2-the-subdomain-and-tls) — the real thing.
+2. [bigwalkradio.stream, with TLS](#2-the-domain-and-tls) — the real thing.
 3. [Deploying from GitHub](#3-deploying-from-github) — push to `main`, done.
 
 The one thing to keep in mind throughout: **the build and the music travel
@@ -275,19 +275,33 @@ IndexedDB and the whole UI work fine. All of it comes back in stage 2.
 
 ---
 
-## 2. The subdomain and TLS
+## 2. The domain and TLS
+
+### Putting the zone on Cloudflare
+
+`bigwalkradio.stream` is its own domain rather than a subdomain of an existing
+zone, so Cloudflare has to be given it first:
+
+1. Cloudflare dashboard → **Add a site** → `bigwalkradio.stream` → Free plan.
+2. Cloudflare hands you two nameservers.
+3. At the registrar you bought `.stream` from, replace the existing
+   nameservers with those two. (Cloudflare Registrar doesn't sell `.stream`,
+   so this stays wherever you bought it.)
+4. Wait for Cloudflare to mark the zone **Active** — usually minutes, up to a
+   day. It emails you.
 
 ### DNS
 
-In Cloudflare, on `sevenstack.net` → **DNS** → **Add record**:
+Then **DNS** → **Add record**, twice:
 
-| Field | Value |
-| --- | --- |
-| Type | A |
-| Name | `radio` |
-| IPv4 address | your Linode's IP |
-| Proxy status | **DNS only** (grey cloud) |
-| TTL | Auto |
+| Type | Name | IPv4 address | Proxy status |
+| --- | --- | --- | --- |
+| A | `@` | your Linode's IP | **DNS only** (grey cloud) |
+| A | `www` | your Linode's IP | **DNS only** (grey cloud) |
+
+`@` is the apex — `bigwalkradio.stream` itself. The `www` record exists only so
+that people who type it get redirected; see the note below about why the radio
+must live on exactly one origin.
 
 **On grey cloud rather than orange.** Two reasons, and one cost.
 
@@ -306,24 +320,54 @@ to proxy the app and serve the media from a separate unproxied hostname — the
 audio elements already set `crossOrigin`, so it would need CORS headers and a
 change to `catalog.urlFor`, not a rewrite.
 
-### The certificate
+### One origin, not two
 
-Once `dig radio.sevenstack.net` returns your Linode's IP:
+A browser keys a service worker, its caches and IndexedDB to the **origin**.
+`https://bigwalkradio.stream` and `https://www.bigwalkradio.stream` are two
+different origins, so a listener who arrived at one and later at the other
+would find a second radio: its own remembered channel, its own volume, its own
+installed copy on the home screen.
+
+So `www` redirects, and never serves. Point the app at the apex:
 
 ```bash
-sudo sed -i 's/server_name _;/server_name radio.sevenstack.net;/' \
+sudo sed -i 's/server_name _;/server_name bigwalkradio.stream;/' \
   /etc/nginx/sites-available/bigwalkradio
-sudo nginx -t && sudo systemctl reload nginx
-
-sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d radio.sevenstack.net
 ```
 
-Choose the redirect option when it offers. certbot edits the server block in
-place and installs a systemd timer for renewal; check it with
+and add the redirect as its own file,
+`sudo nano /etc/nginx/sites-available/bigwalkradio-www`:
+
+```nginx
+server {
+    listen 80;
+    listen [::]:80;
+    server_name www.bigwalkradio.stream;
+    return 301 https://bigwalkradio.stream$request_uri;
+}
+```
+
+```bash
+sudo ln -sf /etc/nginx/sites-available/bigwalkradio-www /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+### The certificate
+
+Once `dig +short bigwalkradio.stream` returns your Linode's IP:
+
+```bash
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d bigwalkradio.stream -d www.bigwalkradio.stream
+```
+
+Both names, so the redirect can be served over HTTPS too — otherwise anyone
+reaching `https://www.` gets a certificate warning before the redirect ever
+runs. Choose the redirect option when certbot offers it. It edits the server
+blocks in place and installs a systemd timer for renewal; check that with
 `sudo certbot renew --dry-run`.
 
-Now `https://radio.sevenstack.net` is a secure context: the service worker
+Now `https://bigwalkradio.stream` is a secure context: the service worker
 registers, the media keys work, and iOS will offer to add it to the home
 screen.
 
@@ -350,8 +394,8 @@ On your machine, generate a key **used for nothing else**:
 
 ```bash
 ssh-keygen -t ed25519 -f ~/.ssh/bigwalkradio-deploy -C "github-actions" -N ""
-ssh-copy-id -i ~/.ssh/bigwalkradio-deploy.pub deploy@radio.sevenstack.net
-ssh-keyscan radio.sevenstack.net    # keep this output for the next step
+ssh-copy-id -i ~/.ssh/bigwalkradio-deploy.pub deploy@bigwalkradio.stream
+ssh-keyscan bigwalkradio.stream    # keep this output for the next step
 ```
 
 ### Repository secrets
@@ -361,7 +405,7 @@ ssh-keyscan radio.sevenstack.net    # keep this output for the next step
 | Name | Value |
 | --- | --- |
 | `DEPLOY_KEY` | contents of `~/.ssh/bigwalkradio-deploy` (the private one, including both `-----` lines) |
-| `DEPLOY_HOST` | `radio.sevenstack.net` |
+| `DEPLOY_HOST` | `bigwalkradio.stream` |
 | `DEPLOY_USER` | `deploy` |
 | `KNOWN_HOSTS` | the `ssh-keyscan` output above |
 
@@ -400,7 +444,7 @@ So whenever the music on the server changes, the order is:
 npm run presets       # rescans ./music, rewrites src/core/presets.ts
 npm test              # 'every daypart points at a real file' catches mismatches
 git commit -am "..."  # deploys the new dial
-rsync -av music/ jacob@radio.sevenstack.net:/srv/bigwalkradio/media/music/
+rsync -av music/ jacob@bigwalkradio.stream:/srv/bigwalkradio/media/music/
 ```
 
 Deploying a build whose presets name files the server doesn't have shows up as
