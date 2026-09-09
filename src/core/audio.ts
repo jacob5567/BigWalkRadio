@@ -40,8 +40,8 @@ interface Voice {
   releasing: boolean;
   /** True once this stream has been sounded, so a restart means a re-seek. */
   started: boolean;
-  /** True once a silent stream has been put where it will be wanted. */
-  parked: boolean;
+  /** Where a silent stream was last put, or null if it has not been placed. */
+  parkedAt: number | null;
 }
 
 /** Seconds of drift tolerated before we hard-seek back onto the schedule. */
@@ -190,7 +190,7 @@ export class AudioEngine {
       voice.epoch++;
       voice.trackId = target.trackId;
       voice.started = false;
-      voice.parked = false;
+      voice.parkedAt = null;
       const url = this.resolveUrl(target.trackId);
       if (!url) return;
       voice.el.src = url;
@@ -211,7 +211,7 @@ export class AudioEngine {
       // Seek first, sound second. Playing from the top and then jumping makes
       // the browser open the file, throw the buffer away and open it again.
       voice.started = true;
-      voice.parked = false;
+      voice.parkedAt = null;
       const epoch = voice.epoch;
       this.seek(voice, target.offsetSec, () => {
         if (voice.epoch !== epoch || voice.releasing || !this.running) return;
@@ -241,8 +241,11 @@ export class AudioEngine {
    */
   private park(voice: Voice, target: VoiceTarget): void {
     const tolerance = target.warm ? PARK_TOLERANCE : CUE_TOLERANCE;
-    if (voice.parked && Math.abs(target.offsetSec - voice.el.currentTime) <= tolerance) return;
-    voice.parked = true;
+    // Measured against where it was put, not where it reports being. A stream
+    // asked for a point past the end of its file sits at the end instead, and
+    // comparing with that would ask for the same seek again on every tick.
+    if (voice.parkedAt !== null && Math.abs(target.offsetSec - voice.parkedAt) <= tolerance) return;
+    voice.parkedAt = target.offsetSec;
     this.seek(voice, target.offsetSec);
   }
 
@@ -287,7 +290,7 @@ export class AudioEngine {
     gain.connect(this.tuning ?? this.master!);
 
     const voice: Voice = {
-      el, source, gain, trackId: null, epoch: 0, releasing: false, started: false, parked: false,
+      el, source, gain, trackId: null, epoch: 0, releasing: false, started: false, parkedAt: null,
     };
     this.voices.set(key, voice);
     return voice;
