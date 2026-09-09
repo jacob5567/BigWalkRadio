@@ -163,14 +163,14 @@ describe('the switch', () => {
 
   it('holds the channel silent until the click has passed', async () => {
     const tune = vi.spyOn(radio.engine, 'tune');
-    await radio.setPosition(5);
+    await radio.setPosition(1);
     // The hold is the engine's to keep now, scheduled in one go on its own
     // clock rather than sampled by the tick.
     expect(tune).toHaveBeenCalledWith(true, DEFAULT_TUNE);
   });
 
   it('hands the engine the settled channel at full gain', async () => {
-    await radio.setPosition(5);
+    await radio.setPosition(1);
     const update = vi.spyOn(radio.engine, 'update');
     settle();
 
@@ -184,7 +184,7 @@ describe('the switch', () => {
     // Turn on early enough that the click has cleared by four seconds into
     // the 07:12 handover, halfway through an 8s blend.
     vi.setSystemTime(Date.parse('2026-03-04T07:12:04Z') - SETTLED_MS);
-    await radio.setPosition(5);
+    await radio.setPosition(1);
     const update = vi.spyOn(radio.engine, 'update');
     settle();
 
@@ -195,7 +195,7 @@ describe('the switch', () => {
   });
 
   it('gives overlapping copies of one track separate voices', async () => {
-    // Channel 5's 07:12 daypart is a single track on repeat. Arrive halfway
+    // Channel 1's 07:12 daypart is a single track on repeat. Arrive halfway
     // through the seam where one pass gives way to the next.
     const seam = radio.getSettings().seamSeconds;
     const leitmotif = radio.catalog.list().find((t) => t.name === 'Leitmotif')!;
@@ -203,7 +203,7 @@ describe('the switch', () => {
     const seamMid = Date.parse('2026-03-04T07:12:00Z') + (stride + seam / 2) * 1000;
 
     vi.setSystemTime(seamMid - SETTLED_MS);
-    await radio.setPosition(5);
+    await radio.setPosition(1);
     const update = vi.spyOn(radio.engine, 'update');
     settle();
 
@@ -223,7 +223,7 @@ describe('the switch', () => {
     const justBefore = Date.parse('2026-03-04T07:12:00Z') + (stride - 4) * 1000;
 
     vi.setSystemTime(justBefore - SETTLED_MS);
-    await radio.setPosition(5);
+    await radio.setPosition(1);
     const update = vi.spyOn(radio.engine, 'update');
     settle();
 
@@ -302,14 +302,14 @@ describe('the media keys', () => {
   });
 
   it('names the station and what it is playing', async () => {
-    await radio.setPosition(5);
+    await radio.setPosition(1);
     vi.setSystemTime(Date.now() + SETTLED_MS);
     radio.tick();
 
     const metadata = mediaSession.metadata as { init: { title: string; artist: string } };
     expect(metadata.init.title).toBe('Leitmotif');
     expect(metadata.init.artist).toContain('Lobby');
-    expect(metadata.init.artist).toContain('Channel 5');
+    expect(metadata.init.artist).toContain('Channel 1');
   });
 
   it('lets go of the keys when the radio is shut down', async () => {

@@ -90,7 +90,19 @@ for (const dir of albums) {
   }
 }
 
-const stations = scheduled;
+// The dial order the app presents, independent of how the folders happen to
+// sort alphabetically. A station whose folder shows up but isn't listed here
+// is appended after these, alphabetically, so a new album still gets a slot.
+const DIAL_ORDER = ['lobby', 'fourthspace', 'breathwork', 'journeybeat', 'underground', 'mallets', 'blueprint'];
+
+const stations = scheduled.sort((a, b) => {
+  const ia = DIAL_ORDER.indexOf(a.albumKey);
+  const ib = DIAL_ORDER.indexOf(b.albumKey);
+  if (ia === -1 && ib === -1) return a.name.localeCompare(b.name);
+  if (ia === -1) return 1;
+  if (ib === -1) return -1;
+  return ia - ib;
+});
 stations.forEach((s, i) => { s.channel = i + 1; });
 
 const used = new Set(stations.flatMap((s) => s.programs.flatMap((p) => p.trackIds)));
