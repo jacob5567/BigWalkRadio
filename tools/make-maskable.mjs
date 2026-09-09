@@ -17,7 +17,7 @@ const OUT = resolve(ROOT, 'public/icons/icon-maskable-512.png');
 const TEMP = resolve(ROOT, 'public/icons/.maskable.svg');
 
 /** The card the artwork sits on, which the maskable does without. */
-const CARD = /<rect x="6" y="6"[^>]*><\/rect>/;
+const CARD = /<rect x="0" y="0" width="512" height="512"[^>]*><\/rect>/;
 /** Bounding box of everything else: the display, the speaker and its bolts. */
 const CONTENT = { minX: 74, minY: 72, maxX: 438, maxY: 475 };
 const SIZE = 512;

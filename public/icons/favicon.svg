@@ -8,7 +8,7 @@
     </pattern>
   </defs>
 
-  <rect x="6" y="6" width="500" height="500" rx="110" fill="#2e7d62" stroke="#0d3527" stroke-width="12"></rect>
+  <rect x="0" y="0" width="512" height="512" rx="113" fill="#2e7d62"></rect>
 
   <g stroke="#0d3527" stroke-width="10">
     <rect x="256" y="325" width="170" height="26" rx="13" fill="#1f6650" transform="rotate(45 256 338)"></rect>
