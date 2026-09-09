@@ -11,10 +11,16 @@ import type { ClockMode, Settings, Station } from './types';
 
 const KEY_SETTINGS = 'settings';
 /**
- * At most four: the track that's up, the one it's overlapping at a seam, the
- * one cued for the next seam, and an outgoing daypart still fading away.
+ * Streams that can be making a sound at once: the track that's up, the one
+ * it's overlapping at a seam, the one cued for the next seam, and an outgoing
+ * daypart still fading away.
  */
 const MAX_VOICES = 4;
+/**
+ * The channels either side, held open but never sounded. These sit outside the
+ * count above, so the engine holds up to six media elements in all.
+ */
+const MAX_WARM = 2;
 const TICK_MS = 250;
 
 export interface OnAir {
@@ -263,7 +269,7 @@ export class Radio {
         .sort((a, b) => Number(b.playing) - Number(a.playing) || b.gain - a.gain)
         .slice(0, MAX_VOICES);
 
-      this.engine.update([...targets, ...this.warmTargets(state, sync)]);
+      this.engine.update([...targets, ...this.warmTargets(state, sync).slice(0, MAX_WARM)]);
       this.updateMediaSession(state);
 
       // Once the click of switching off has finished, let the audio hardware
@@ -280,6 +286,9 @@ export class Radio {
    * one of them then reuses a stream that is already on the file, instead of
    * opening it and hunting for the offset from cold -- which over a network,
    * in a format with no seek index, is most of what makes a change feel slow.
+   *
+   * Two at most, one each way, and fewer when the dial is short enough that
+   * they are the same channel.
    */
   private warmTargets(state: RadioState, sync: SyncMode): VoiceTarget[] {
     const count = this.stations.length;
