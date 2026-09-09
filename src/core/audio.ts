@@ -24,7 +24,8 @@ export interface VoiceTarget {
   sync: SyncMode;
   /**
    * True for a stream held open only so that tuning to it is quick. It is
-   * loaded and parked, never sounded, and costs nothing while it waits.
+   * loaded and parked, never sounded, and costs nothing while it waits. The
+   * engine reads this to decide how exactly it has to be placed: see `park`.
    */
   warm?: boolean;
 }
@@ -46,11 +47,13 @@ interface Voice {
 /** Seconds of drift tolerated before we hard-seek back onto the schedule. */
 const DRIFT_TOLERANCE = 0.4;
 /**
- * Seconds a silent stream may fall behind the schedule before it is moved up.
- * Comfortably inside what a browser reads ahead of a paused element, so tuning
- * to one still lands in audio it already has.
+ * Seconds a stream held only for warmth may fall behind the schedule before it
+ * is moved up. Comfortably inside what a browser reads ahead of a paused
+ * element, so tuning to one still lands in audio it already has.
  */
 const PARK_TOLERANCE = 15;
+/** The same for a stream cued for a seam: near enough that no one could hear it. */
+const CUE_TOLERANCE = 0.05;
 const RAMP = 0.08;
 const RELEASE_MS = 400;
 /** Steps in the scheduled rise: enough that the curve is smooth to the ear. */
@@ -200,7 +203,7 @@ export class AudioEngine {
     if (!target.playing) {
       // Cued and waiting: loaded, sitting where it will be wanted, silent.
       if (!voice.el.paused) voice.el.pause();
-      this.park(voice, target.offsetSec);
+      this.park(voice, target);
       return;
     }
 
@@ -227,14 +230,20 @@ export class AudioEngine {
   /**
    * Holds a silent stream at the point it will be wanted. A paused element
    * stays put while the schedule walks on, so the gap opens by a second every
-   * second; closing it costs a range request, which is the very expense
-   * holding the stream open is meant to save. So it is closed only once the
-   * gap has grown past what the browser will have read ahead.
+   * second, and closing it costs a range request.
+   *
+   * How wide a gap is tolerable depends on why the stream is silent, which is
+   * what `warm` says. One cued for a seam is about to be sounded from exactly
+   * where it sits, so it is placed exactly. One held open only so that tuning
+   * to it is quick gets seeked again when that happens, so where it sits is no
+   * more than a hint about where to read ahead, and moving it up costs the
+   * request that holding it open was meant to save.
    */
-  private park(voice: Voice, offsetSec: number): void {
-    if (voice.parked && Math.abs(offsetSec - voice.el.currentTime) < PARK_TOLERANCE) return;
+  private park(voice: Voice, target: VoiceTarget): void {
+    const tolerance = target.warm ? PARK_TOLERANCE : CUE_TOLERANCE;
+    if (voice.parked && Math.abs(target.offsetSec - voice.el.currentTime) <= tolerance) return;
     voice.parked = true;
-    this.seek(voice, offsetSec);
+    this.seek(voice, target.offsetSec);
   }
 
   /** Puts a stream where the schedule wants it, then calls `done` once it is there. */
