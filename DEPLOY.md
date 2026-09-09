@@ -239,8 +239,16 @@ server {
     location = /index.html { add_header Cache-Control "no-cache"; }
     location = /sw.js      { add_header Cache-Control "no-cache"; }
 
+    # No blanket fallback to the shell. With one, a path that is slightly
+    # wrong -- an icon, a script -- returns index.html with a 200 rather than
+    # a 404, and the browser is handed HTML where it asked for a PNG. It shows
+    # nothing, and there is no failing request in the log to explain why.
+    #
+    # `index` still serves the shell for `/`, which is the only page there is.
+    # If the app ever grows client-side routes, those paths will need their own
+    # fallback; a missing file must still be a 404.
     location / {
-        try_files $uri $uri/ /index.html;
+        try_files $uri $uri/ =404;
     }
 }
 ```
@@ -271,6 +279,19 @@ curl -sI -r 0-1023 "http://localhost/$URL" | head -6
 The second one must say `HTTP/1.1 206 Partial Content` with a `Content-Range`
 header and `Content-Type: audio/ogg`. A `200` there means ranges aren't being
 served and every tune-in will download a whole file before it makes a sound.
+
+Then check that a path that isn't there says so, because a server that answers
+every wrong path with the page is one you cannot debug:
+
+```bash
+curl -sI http://localhost/icons/icon-192.png     | head -3   # 200, image/png
+curl -sI http://localhost/icons/does-not-exist.png | head -3  # 404
+```
+
+If the second returns `200` with `Content-Type: text/html`, the fallback is
+still catching assets. That is what a blank icon looks like from the browser's
+side: it asked for an image and was handed a page, with nothing in the log to
+say anything went wrong.
 
 Then open `http://<ip>` on your phone and press the speaker grille.
 
