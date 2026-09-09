@@ -227,6 +227,14 @@ server {
         add_header Cache-Control "public, max-age=31536000, immutable";
     }
 
+    # These do not carry a hash: the names are fixed and the artwork behind
+    # them changes. With no header at all a browser is free to guess how long
+    # to keep them, and a guess of days means new art that never arrives.
+    # `no-cache` still stores them, it just revalidates first, which is a 304.
+    location /icons/ {
+        add_header Cache-Control "no-cache";
+    }
+
     # nginx ships no type for .webmanifest and would serve it as
     # octet-stream, which browsers are entitled to refuse to parse.
     location = /manifest.webmanifest {

@@ -1,11 +1,16 @@
 // App-shell cache so the radio opens offline. The audio is served by the host
 // from /music and is deliberately left to the browser's own HTTP cache: the
 // files are large, and precaching them would blow the storage quota.
-const CACHE = 'bigwalk-radio-v2';
+const CACHE = 'bigwalk-radio-v3';
 const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
+  // Straight from the network, not through the HTTP cache. The icon names
+  // never change, so a stale entry there would quietly refill a brand new
+  // cache with the old artwork -- and bumping the name above would look like
+  // it had done nothing.
+  const shell = SHELL.map((url) => new Request(url, { cache: 'reload' }));
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(shell)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {
