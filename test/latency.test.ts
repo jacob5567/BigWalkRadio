@@ -40,6 +40,10 @@ const target = (over: Partial<VoiceTarget> = {}): VoiceTarget => ({
 /** Files the browser was sent off to find, in order. */
 const opens = () => allOps().filter((op) => op.startsWith('open '));
 
+/** Where a stream was put, in order. Each one is a range request on a cold file. */
+const seeks = (element: HTMLMediaElement) =>
+  opsOf(element).filter((op) => op.startsWith('seek ')).map((op) => Number(op.slice(5)));
+
 describe('opening a channel', () => {
   let engine: AudioEngine;
 
@@ -165,6 +169,66 @@ describe('the switch envelope', () => {
   });
 });
 
+/**
+ * A stream that makes no sound still costs something to move: a paused element
+ * stays where it is while the schedule walks on, and closing that gap is a
+ * range request like any other. Counting opens says nothing about this, which
+ * is how it went unnoticed that the channels held either side were being
+ * chased four times a second. These count the seeks instead.
+ */
+describe('holding a stream ready', () => {
+  let engine: AudioEngine;
+
+  beforeEach(async () => {
+    installBrowserStubs();
+    engine = new AudioEngine((id) => `/${id}`);
+    await engine.start();
+  });
+
+  afterEach(() => {
+    engine.dispose();
+    vi.unstubAllGlobals();
+  });
+
+  const parked = (over: Partial<VoiceTarget> = {}) =>
+    target({ key: 'parked', gain: 0, playing: false, ...over });
+
+  it('puts a warm stream in place once, not once a tick', () => {
+    // Ten ticks of the scheduler, the schedule walking on 250 ms each time.
+    for (let i = 0; i < 10; i++) {
+      engine.update([parked({ warm: true, offsetSec: 100 + i * 0.25 })]);
+    }
+    expect(seeks(createdAudio.at(-1)!)).toEqual([100]);
+  });
+
+  it('moves a warm stream up once it has fallen far enough behind to matter', () => {
+    engine.update([parked({ warm: true, offsetSec: 100 })]);
+    const element = createdAudio.at(-1)!;
+
+    // Ten seconds adrift is still inside what the browser will have read
+    // ahead, so tuning to it would land in audio it already has.
+    engine.update([parked({ warm: true, offsetSec: 110 })]);
+    expect(seeks(element)).toEqual([100]);
+
+    engine.update([parked({ warm: true, offsetSec: 130 })]);
+    expect(seeks(element)).toEqual([100, 130]);
+  });
+
+  it('places a stream cued for a seam exactly, and then leaves it alone', () => {
+    for (let i = 0; i < 10; i++) engine.update([parked({ offsetSec: 0 })]);
+    expect(seeks(createdAudio.at(-1)!)).toEqual([0]);
+  });
+
+  it('will not let a cued stream sit adrift the way a warm one may', () => {
+    engine.update([parked({ offsetSec: 0 })]);
+    const element = createdAudio.at(-1)!;
+    // It is about to be sounded from exactly where it sits, so four seconds
+    // out is four seconds of the wrong music.
+    engine.update([parked({ offsetSec: 4 })]);
+    expect(seeks(element)).toEqual([0, 4]);
+  });
+});
+
 describe('changing channel', () => {
   let radio: Radio;
 
@@ -230,6 +294,23 @@ describe('changing channel', () => {
     await radio.setPosition(4);
     // Channel 4 itself, plus its own two neighbours: nothing was held ready.
     expect(openedFiles().size).toBe(before.size + 3);
+  });
+
+  it('leaves the channels either side alone while it plays', async () => {
+    await radio.setPosition(4);
+    const sought = () => createdAudio
+      .filter((el) => !opsOf(el).includes('play'))
+      .reduce((total, el) => total + seeks(el).length, 0);
+    const before = sought();
+
+    // A minute of the scheduler running, at the 250 ms tick it really uses.
+    for (let i = 0; i < 240; i++) {
+      vi.setSystemTime(Date.now() + 250);
+      radio.tick();
+    }
+
+    // Chasing the schedule would be 240 apiece, and 480 between them.
+    expect(sought() - before).toBeLessThan(10);
   });
 
   it('opens nothing at all while the radio is off', async () => {
