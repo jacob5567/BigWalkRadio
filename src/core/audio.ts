@@ -37,11 +37,20 @@ interface Voice {
   /** Generation counter so a slow async src load can't clobber a newer one. */
   epoch: number;
   releasing: boolean;
+  /** True once this stream has been sounded, so a restart means a re-seek. */
   started: boolean;
+  /** True once a silent stream has been put where it will be wanted. */
+  parked: boolean;
 }
 
 /** Seconds of drift tolerated before we hard-seek back onto the schedule. */
 const DRIFT_TOLERANCE = 0.4;
+/**
+ * Seconds a silent stream may fall behind the schedule before it is moved up.
+ * Comfortably inside what a browser reads ahead of a paused element, so tuning
+ * to one still lands in audio it already has.
+ */
+const PARK_TOLERANCE = 15;
 const RAMP = 0.08;
 const RELEASE_MS = 400;
 /** Steps in the scheduled rise: enough that the curve is smooth to the ear. */
@@ -178,6 +187,7 @@ export class AudioEngine {
       voice.epoch++;
       voice.trackId = target.trackId;
       voice.started = false;
+      voice.parked = false;
       const url = this.resolveUrl(target.trackId);
       if (!url) return;
       voice.el.src = url;
@@ -188,9 +198,9 @@ export class AudioEngine {
     }
 
     if (!target.playing) {
-      // Cued and waiting: loaded, sitting at the right spot, making no sound.
+      // Cued and waiting: loaded, sitting where it will be wanted, silent.
       if (!voice.el.paused) voice.el.pause();
-      if (!voice.started) this.seek(voice, target.offsetSec);
+      this.park(voice, target.offsetSec);
       return;
     }
 
@@ -198,6 +208,7 @@ export class AudioEngine {
       // Seek first, sound second. Playing from the top and then jumping makes
       // the browser open the file, throw the buffer away and open it again.
       voice.started = true;
+      voice.parked = false;
       const epoch = voice.epoch;
       this.seek(voice, target.offsetSec, () => {
         if (voice.epoch !== epoch || voice.releasing || !this.running) return;
@@ -211,6 +222,19 @@ export class AudioEngine {
         this.seek(voice, target.offsetSec);
       }
     }
+  }
+
+  /**
+   * Holds a silent stream at the point it will be wanted. A paused element
+   * stays put while the schedule walks on, so the gap opens by a second every
+   * second; closing it costs a range request, which is the very expense
+   * holding the stream open is meant to save. So it is closed only once the
+   * gap has grown past what the browser will have read ahead.
+   */
+  private park(voice: Voice, offsetSec: number): void {
+    if (voice.parked && Math.abs(offsetSec - voice.el.currentTime) < PARK_TOLERANCE) return;
+    voice.parked = true;
+    this.seek(voice, offsetSec);
   }
 
   /** Puts a stream where the schedule wants it, then calls `done` once it is there. */
@@ -253,7 +277,9 @@ export class AudioEngine {
     source.connect(gain);
     gain.connect(this.tuning ?? this.master!);
 
-    const voice: Voice = { el, source, gain, trackId: null, epoch: 0, releasing: false, started: false };
+    const voice: Voice = {
+      el, source, gain, trackId: null, epoch: 0, releasing: false, started: false, parked: false,
+    };
     this.voices.set(key, voice);
     return voice;
   }
