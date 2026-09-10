@@ -172,6 +172,34 @@ times: how many times the browser was sent to find a file, in what order it was
 asked to seek and play, and what the tuning gain reaches at a given moment —
 all exact, and none of it needing a network or a speaker.
 
+## Listening offline
+
+The app shell is cached on first visit, so the radio opens with no connection.
+The music is not: it streams from the host, and 145 MB is not something to
+collect on anyone's behalf without asking.
+
+The welcome sheet — the **i** in the top left — has a button that fetches the
+lot into a cache of its own, with a progress bar, and a **Remove** to give the
+space back. The service worker answers `/music/` and `/audio/` out of that
+cache when it holds the file, slicing byte ranges itself so a stored track is
+still seekable; anything it doesn't hold falls through to the host. It never
+puts anything there on its own.
+
+Two things worth knowing:
+
+- **Install it to the home screen first.** An installed PWA gets its own
+  storage, so a copy downloaded in the browser tab does not follow it across.
+  The sheet says so above the button.
+- **The service worker only registers in a production build.** `npm run dev`
+  will happily fill the cache, but nothing reads it back; test offline against
+  `npm run build && npm run preview`.
+
+The download is resumable — files already held are skipped — and survives a
+deploy. The shell cache is versioned and cleared on activation; the audio cache
+is deliberately left alone, since a changed stylesheet is no reason to refetch
+145 MB. Sizes come from `src/core/presets.ts`, measured at generation time, so
+the total can be quoted before a single byte moves.
+
 ## The controls
 
 The unit is a single screen. A lamp and a power switch sit to the left of the

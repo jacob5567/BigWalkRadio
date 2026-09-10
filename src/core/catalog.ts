@@ -1,3 +1,4 @@
+import { assetUrl } from './paths';
 import { TRACK_CATALOG } from './presets';
 import type { Track } from './types';
 
@@ -32,15 +33,10 @@ export class Catalog {
     return this.availability.get(id) ?? 'unknown';
   }
 
-  /**
-   * Where the browser should fetch a track. Paths are relative to the site
-   * root so the app works when it is hosted under a subdirectory.
-   */
+  /** Where the browser should fetch a track. */
   urlFor(id: string): string | null {
     const track = this.tracks.get(id);
-    if (!track) return null;
-    const base = import.meta.env.BASE_URL ?? '/';
-    return `${base.endsWith('/') ? base : `${base}/`}${encodeURI(track.src)}`;
+    return track ? assetUrl(track.src) : null;
   }
 
   /**

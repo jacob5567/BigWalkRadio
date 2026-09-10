@@ -9,6 +9,11 @@ export interface Track {
   name: string;
   /** Seconds. Baked in at build time, re-probed in the browser if missing. */
   duration: number;
+  /**
+   * File size in bytes, baked in at build time. Only used to size the offline
+   * download, so 0 (the file wasn't there to measure) is survivable.
+   */
+  bytes?: number;
   /** Path relative to the site root, unencoded. */
   src: string;
   /** Album parsed out of the filename, if it named one. */

@@ -112,9 +112,9 @@ describe('the info sheet', () => {
     expect(text).toContain('aksfx');
     expect(text).toContain('House House');
 
-    // Android and Firefox before Safari, which is the order asked for.
+    // Android before Safari, which is the order asked for.
     const steps = [...document.querySelectorAll('.info-steps li')].map((li) => li.textContent ?? '');
-    expect(steps.map((s) => s.split(':')[0])).toEqual(['Android, Chrome', 'Android, Firefox', 'iPhone or iPad']);
+    expect(steps.map((s) => s.split(':')[0])).toEqual(['Android, Firefox', 'Android, Chrome', 'iPhone or iPad']);
     expect(steps[2]).toContain('Add to Home Screen');
 
     const links = [...document.querySelectorAll<HTMLAnchorElement>('.info-sheet a')];

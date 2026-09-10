@@ -1,5 +1,6 @@
 import { getKV, setKV } from '../core/db';
 import { el } from './dom';
+import { OfflineSection } from './offline-section';
 
 /** Set once the panel has been closed, so it greets a listener only the once. */
 const KEY_SEEN = 'info-seen';
@@ -48,6 +49,8 @@ export class InfoPanel {
 
   private readonly done = el('button', { class: 'info-done', type: 'button' }, 'Start listening');
 
+  private readonly offline = new OfflineSection();
+
   private readonly sheet: HTMLElement;
   private readonly backdrop: HTMLElement;
   private returnFocusTo: HTMLElement | null = null;
@@ -88,6 +91,8 @@ export class InfoPanel {
             'the ⋮ menu, then ', el('b', { text: 'Install app' }), '.'),
           el('li', {}, el('b', { text: 'iPhone or iPad: ' }),
             'in Safari, Share, then ', el('b', { text: 'Add to Home Screen' }), '.'))),
+
+      this.offline.el,
 
       section('Credits',
         el('p', {},
@@ -135,6 +140,8 @@ export class InfoPanel {
     document.addEventListener('keydown', this.onKeyDown, true);
     this.sheet.scrollTop = 0;
     this.sheet.focus();
+    // What is on the device may have changed since this was last looked at.
+    void this.offline.refresh();
   }
 
   /** Closing it is also what marks it read, whichever way it was closed. */

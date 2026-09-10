@@ -259,6 +259,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 01 -5-23am- Alba.ogg",
     "name": "Alba",
     "duration": 237.054,
+    "bytes": 5575107,
     "src": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 01 -5-23am- Alba.ogg",
     "album": "Blueprint",
     "timeOfDayMinutes": 323
@@ -267,6 +268,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 02 -11-42am- Midi.ogg",
     "name": "Midi",
     "duration": 185.818,
+    "bytes": 4806829,
     "src": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 02 -11-42am- Midi.ogg",
     "album": "Blueprint",
     "timeOfDayMinutes": 702
@@ -275,6 +277,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 03 -4-40pm- Terra.ogg",
     "name": "Terra",
     "duration": 232.051,
+    "bytes": 6057728,
     "src": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 03 -4-40pm- Terra.ogg",
     "album": "Blueprint",
     "timeOfDayMinutes": 1000
@@ -283,6 +286,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 04 -10-51pm- Glomo.ogg",
     "name": "Glomo",
     "duration": 250.077,
+    "bytes": 5388449,
     "src": "music/aksfx - Radio- Blueprint (Original Music from Big Walk)/aksfx - Radio- Blueprint (Original Music from Big Walk) - 04 -10-51pm- Glomo.ogg",
     "album": "Blueprint",
     "timeOfDayMinutes": 1371
@@ -291,6 +295,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 01 -4-48am- Andante.ogg",
     "name": "Andante",
     "duration": 192.34,
+    "bytes": 4386859,
     "src": "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 01 -4-48am- Andante.ogg",
     "album": "Breathwork",
     "timeOfDayMinutes": 288
@@ -299,6 +304,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 02 -10-08am- Sleigh Bells.ogg",
     "name": "Sleigh Bells",
     "duration": 436.192,
+    "bytes": 11163800,
     "src": "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 02 -10-08am- Sleigh Bells.ogg",
     "album": "Breathwork",
     "timeOfDayMinutes": 608
@@ -307,6 +313,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 03 -10-15pm- Vox Humana.ogg",
     "name": "Vox Humana",
     "duration": 285.849,
+    "bytes": 6746867,
     "src": "music/aksfx - Radio- Breathwork (Original Music from Big Walk)/aksfx - Radio- Breathwork (Original Music from Big Walk) - 03 -10-15pm- Vox Humana.ogg",
     "album": "Breathwork",
     "timeOfDayMinutes": 1335
@@ -315,6 +322,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Fourth Space (Original Music from Big Walk)/aksfx - Radio- Fourth Space (Original Music from Big Walk) - 01 -2-50am- Dawn.ogg",
     "name": "Dawn",
     "duration": 539.02,
+    "bytes": 9764517,
     "src": "music/aksfx - Radio- Fourth Space (Original Music from Big Walk)/aksfx - Radio- Fourth Space (Original Music from Big Walk) - 01 -2-50am- Dawn.ogg",
     "album": "Fourth Space",
     "timeOfDayMinutes": 170
@@ -323,6 +331,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Fourth Space (Original Music from Big Walk)/aksfx - Radio- Fourth Space (Original Music from Big Walk) - 02 -5-41pm- Dusk.ogg",
     "name": "Dusk",
     "duration": 360.98,
+    "bytes": 6936263,
     "src": "music/aksfx - Radio- Fourth Space (Original Music from Big Walk)/aksfx - Radio- Fourth Space (Original Music from Big Walk) - 02 -5-41pm- Dusk.ogg",
     "album": "Fourth Space",
     "timeOfDayMinutes": 1061
@@ -331,6 +340,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 01 -1-20pm- Journey Beat.ogg",
     "name": "Journey Beat",
     "duration": 224.001,
+    "bytes": 5716677,
     "src": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 01 -1-20pm- Journey Beat.ogg",
     "album": "Journey Beat",
     "timeOfDayMinutes": 800
@@ -339,6 +349,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 02 -7-33pm- Holy Beat.ogg",
     "name": "Holy Beat",
     "duration": 316.299,
+    "bytes": 6451547,
     "src": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 02 -7-33pm- Holy Beat.ogg",
     "album": "Journey Beat",
     "timeOfDayMinutes": 1173
@@ -347,6 +358,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 03 -4-21am- Bounce.ogg",
     "name": "Bounce",
     "duration": 187.24,
+    "bytes": 4743417,
     "src": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 03 -4-21am- Bounce.ogg",
     "album": "Journey Beat",
     "timeOfDayMinutes": 261
@@ -355,6 +367,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 04 -9-31am- Whistler.ogg",
     "name": "Whistler",
     "duration": 172.46,
+    "bytes": 4206547,
     "src": "music/aksfx - Radio- Journey Beat (Original Music from Big Walk)/aksfx - Radio- Journey Beat (Original Music from Big Walk) - 04 -9-31am- Whistler.ogg",
     "album": "Journey Beat",
     "timeOfDayMinutes": 571
@@ -363,6 +376,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 01 -12-00am- Motif.ogg",
     "name": "Motif",
     "duration": 270.014,
+    "bytes": 5764501,
     "src": "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 01 -12-00am- Motif.ogg",
     "album": "Lobby",
     "timeOfDayMinutes": 0
@@ -371,6 +385,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 02 -7-12am- Leitmotif.ogg",
     "name": "Leitmotif",
     "duration": 281.31,
+    "bytes": 6704392,
     "src": "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 02 -7-12am- Leitmotif.ogg",
     "album": "Lobby",
     "timeOfDayMinutes": 432
@@ -379,6 +394,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 03 -2-41pm- Refrain.ogg",
     "name": "Refrain",
     "duration": 358.796,
+    "bytes": 8434917,
     "src": "music/aksfx - Radio- Lobby (Original Music from Big Walk)/aksfx - Radio- Lobby (Original Music from Big Walk) - 03 -2-41pm- Refrain.ogg",
     "album": "Lobby",
     "timeOfDayMinutes": 881
@@ -387,6 +403,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 01 -3-56am- Phase i.ogg",
     "name": "Phase i",
     "duration": 224.035,
+    "bytes": 4931995,
     "src": "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 01 -3-56am- Phase i.ogg",
     "album": "Mallets",
     "timeOfDayMinutes": 236
@@ -395,6 +412,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 02 -10-09am- Phase ii.ogg",
     "name": "Phase ii",
     "duration": 359.985,
+    "bytes": 7944444,
     "src": "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 02 -10-09am- Phase ii.ogg",
     "album": "Mallets",
     "timeOfDayMinutes": 609
@@ -403,6 +421,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 03 -8-09pm- Phase iii.ogg",
     "name": "Phase iii",
     "duration": 315.919,
+    "bytes": 7219894,
     "src": "music/aksfx - Radio- Mallets (Original Music from Big Walk)/aksfx - Radio- Mallets (Original Music from Big Walk) - 03 -8-09pm- Phase iii.ogg",
     "album": "Mallets",
     "timeOfDayMinutes": 1209
@@ -411,6 +430,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 01 -10-45am- Flashes.ogg",
     "name": "Flashes",
     "duration": 185.958,
+    "bytes": 4589622,
     "src": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 01 -10-45am- Flashes.ogg",
     "album": "Underground",
     "timeOfDayMinutes": 645
@@ -419,6 +439,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 02 -3-53pm- Yuhyuh.ogg",
     "name": "Yuhyuh",
     "duration": 181.979,
+    "bytes": 4391843,
     "src": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 02 -3-53pm- Yuhyuh.ogg",
     "album": "Underground",
     "timeOfDayMinutes": 953
@@ -427,6 +448,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 03 -8-58pm- Electr.ogg",
     "name": "Electr",
     "duration": 152.061,
+    "bytes": 4078469,
     "src": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 03 -8-58pm- Electr.ogg",
     "album": "Underground",
     "timeOfDayMinutes": 1258
@@ -435,6 +457,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 04 -1-11am- Antemma.ogg",
     "name": "Antemma",
     "duration": 210.315,
+    "bytes": 5392756,
     "src": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 04 -1-11am- Antemma.ogg",
     "album": "Underground",
     "timeOfDayMinutes": 71
@@ -443,6 +466,7 @@ export const TRACK_CATALOG: Track[] = [
     "id": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 05 -7-01am- Suns.ogg",
     "name": "Suns",
     "duration": 169.687,
+    "bytes": 3938527,
     "src": "music/aksfx - Radio- Underground (Original Music from Big Walk)/aksfx - Radio- Underground (Original Music from Big Walk) - 05 -7-01am- Suns.ogg",
     "album": "Underground",
     "timeOfDayMinutes": 421

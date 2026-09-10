@@ -33,6 +33,18 @@ export function mmss(seconds: number): string {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
+/**
+ * "145 MB", "1.4 GB", "220 KB". Megabytes are what a download is quoted in, so
+ * these are the powers of ten a phone's storage screen uses, not of two.
+ */
+export function formatBytes(bytes: number): string {
+  const n = Math.max(0, bytes);
+  if (n >= 1e9) return `${(n / 1e9).toFixed(1)} GB`;
+  if (n >= 1e6) return `${Math.round(n / 1e6)} MB`;
+  if (n >= 1e3) return `${Math.round(n / 1e3)} KB`;
+  return `${Math.round(n)} B`;
+}
+
 /** "6h 19m", "46m 7s", "12s" -- a countdown that stays readable at any scale. */
 export function humanSpan(ms: number): string {
   const s = Math.max(0, Math.round(ms / 1000));

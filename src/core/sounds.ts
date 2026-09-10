@@ -1,3 +1,4 @@
+import { assetUrl } from './paths';
 import { SOUND_EFFECTS } from './sfx';
 
 /** Something the radio does that has a sound attached to it. */
@@ -41,8 +42,7 @@ export class SoundBank {
   }
 
   private urlFor(path: string): string {
-    const base = import.meta.env.BASE_URL ?? '/';
-    return `${base.endsWith('/') ? base : `${base}/`}${encodeURI(path)}`;
+    return assetUrl(path);
   }
 
   /**

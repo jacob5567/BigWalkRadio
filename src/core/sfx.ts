@@ -20,3 +20,17 @@ export const SOUND_EFFECTS: Record<string, string[]> = {
     "audio/sfx_prop_radio_on_03.wav"
   ]
 };
+
+/** Sizes, for pricing the offline download. Keyed by the paths above. */
+export const SOUND_EFFECT_BYTES: Record<string, number> = {
+  "audio/sfx_prop_radio_channel_change_01.wav": 17276,
+  "audio/sfx_prop_radio_channel_change_02.wav": 17938,
+  "audio/sfx_prop_radio_channel_change_03.wav": 16722,
+  "audio/sfx_prop_radio_channel_change_04.wav": 21070,
+  "audio/sfx_prop_radio_off_01.wav": 24132,
+  "audio/sfx_prop_radio_off_02.wav": 20806,
+  "audio/sfx_prop_radio_off_03.wav": 20712,
+  "audio/sfx_prop_radio_on_01.wav": 19142,
+  "audio/sfx_prop_radio_on_02.wav": 21114,
+  "audio/sfx_prop_radio_on_03.wav": 19680
+};
