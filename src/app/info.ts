@@ -8,12 +8,12 @@ const SOUNDTRACK = 'https://aksfx.bandcamp.com/';
 
 /** The face and the tray, in the order a hand finds them. */
 const CONTROLS: ReadonlyArray<readonly [string, string]> = [
-  ['Switch', 'The tall switch beside the lamp turns the radio on and off. The aerial goes up with it.'],
-  ['Speaker', 'The grille is a button. Press it to move on a channel, round through off and back to the first.'],
-  ['‹  ›', 'Back a channel, on a channel — without passing through off.'],
-  ['Wheel', 'Volume. Drag it round, scroll it, or hold it and use the arrow keys.'],
-  ['REAL · GAME', 'Which clock the schedule runs on. See below.'],
-  ['Media keys', 'Play and pause work the switch; the track buttons change channel. From a headset, a keyboard, or the lock screen.'],
+  ['Switch', 'On and off. The aerial goes up with it.'],
+  ['Speaker', 'A button. Press it to move on a channel, round through off.'],
+  ['‹  ›', 'Back a channel, forward a channel.'],
+  ['Wheel', 'Volume. Drag it, scroll it, or use the arrow keys.'],
+  ['REAL · GAME', 'Which clock the schedule runs on.'],
+  ['Media keys', 'Play and pause work the switch; the track buttons change channel.'],
 ];
 
 /** Anything inside the sheet that can take focus, for the tab loop. */
@@ -63,9 +63,8 @@ export class InfoPanel {
       this.close,
       el('h1', { class: 'info-title', id: 'info-title', text: 'Big Walk Radio' }),
       el('p', { class: 'info-lede' },
-        'Seven channels of the ', el('em', { text: 'Big Walk' }), ' soundtrack, running on a clock. Every'
-        + ' station has a track for each part of the day; it loops until its hour is up, and the next one'
-        + ' fades in over the top of it.'),
+        'Seven channels of the ', el('em', { text: 'Big Walk' }), ' soundtrack, on a clock. Each station'
+        + ' plays the track that belongs to the time of day, looped, until the next fades in over it.'),
 
       section('The controls',
         el('dl', { class: 'info-keys' }, ...CONTROLS.flatMap(control))),
@@ -73,30 +72,30 @@ export class InfoPanel {
       section('REAL and GAME',
         el('p', {},
           el('b', { text: 'REAL' }),
-          ' keeps your own clock. A track that goes on air at 7:12am goes on air at 7:12am, and the dial'
-          + ' drifts through the day the way the day does — so a channel can sit on one piece for hours.'),
+          ' runs on your own clock: a 7:12am track goes on at 7:12am, so a channel can sit on one piece'
+          + ' for hours.'),
         el('p', {},
           el('b', { text: 'GAME' }),
-          ' folds a whole broadcast day into 24 real minutes, the way it runs in the game. Every daypart'
-          + ' on every channel comes round inside half an hour, which is the quickest way to hear the'
-          + ' shape of a station. The music still plays at its own speed; only the schedule is in a hurry.')),
+          ' folds a whole broadcast day into 24 real minutes, as it runs in the game. The music still'
+          + ' plays at its own speed; only the schedule hurries.')),
 
       section('Keeping it on a phone',
-        el('p', { text: 'Added to the home screen it opens like an app — its own icon, full screen, no browser bar.' }),
+        el('p', { text: 'On the home screen it opens full screen, with its own icon.' }),
         el('ul', { class: 'info-steps' },
+          el('li', {}, el('b', { text: 'Android, Chrome: ' }),
+            'the ⋮ menu, then ', el('b', { text: 'Install app' }), '.'),
+          el('li', {}, el('b', { text: 'Android, Firefox: ' }),
+            'the ⋮ menu, then ', el('b', { text: 'Add to Home screen' }), '.'),
           el('li', {}, el('b', { text: 'iPhone or iPad: ' }),
-            'open it in Safari, tap Share, then scroll to ', el('b', { text: 'Add to Home Screen' }), '.'),
-          el('li', {}, el('b', { text: 'Android: ' }),
-            'open it in Chrome, tap the ⋮ menu, then ', el('b', { text: 'Install app' }),
-            ' (or ', el('b', { text: 'Add to Home screen' }), ').'))),
+            'in Safari, Share, then ', el('b', { text: 'Add to Home Screen' }), '.'))),
 
       section('Credits',
         el('p', {},
-          'Music and sound effects by ',
+          'Music and sound by ',
           el('a', { class: 'info-link', href: SOUNDTRACK, target: '_blank', rel: 'noreferrer', text: 'aksfx' }),
-          ', written for ', el('em', { text: 'Big Walk' }), ' by ', el('b', { text: 'House House' }), '.'),
+          ', for ', el('em', { text: 'Big Walk' }), ' by ', el('b', { text: 'House House' }), '.'),
         el('p', { class: 'info-fine' },
-          'A fan-made player, not affiliated with either. The soundtrack is worth owning: ',
+          'A fan-made player, not affiliated with either. Soundtrack: ',
           el('a', { class: 'info-link', href: SOUNDTRACK, target: '_blank', rel: 'noreferrer', text: 'aksfx.bandcamp.com' }),
           '.')),
 
