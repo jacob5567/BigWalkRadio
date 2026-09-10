@@ -8,8 +8,8 @@ const SOUNDTRACK = 'https://aksfx.bandcamp.com/';
 
 /** The face and the tray, in the order a hand finds them. */
 const CONTROLS: ReadonlyArray<readonly [string, string]> = [
-  ['Switch', 'On and off. The aerial goes up with it.'],
-  ['Speaker', 'A button. Press it to move on a channel, round through off.'],
+  ['Switch', 'Turns the radio on and off.'],
+  ['Speaker', 'A button. Press it to cycle through the channels and back to off.'],
   ['‹  ›', 'Back a channel, forward a channel.'],
   ['Wheel', 'Volume. Drag it, scroll it, or use the arrow keys.'],
   ['REAL · GAME', 'Which clock the schedule runs on.'],
@@ -69,7 +69,7 @@ export class InfoPanel {
       section('The controls',
         el('dl', { class: 'info-keys' }, ...CONTROLS.flatMap(control))),
 
-      section('REAL and GAME',
+      section('REAL and GAME times',
         el('p', {},
           el('b', { text: 'REAL' }),
           ' runs on your own clock: a 7:12am track goes on at 7:12am, so a channel can sit on one piece'
@@ -79,19 +79,19 @@ export class InfoPanel {
           ' folds a whole broadcast day into 24 real minutes, as it runs in the game. The music still'
           + ' plays at its own speed; only the schedule hurries.')),
 
-      section('Keeping it on a phone',
+      section('Installing it on a phone',
         el('p', { text: 'On the home screen it opens full screen, with its own icon.' }),
         el('ul', { class: 'info-steps' },
-          el('li', {}, el('b', { text: 'Android, Chrome: ' }),
-            'the ⋮ menu, then ', el('b', { text: 'Install app' }), '.'),
           el('li', {}, el('b', { text: 'Android, Firefox: ' }),
             'the ⋮ menu, then ', el('b', { text: 'Add to Home screen' }), '.'),
+          el('li', {}, el('b', { text: 'Android, Chrome: ' }),
+            'the ⋮ menu, then ', el('b', { text: 'Install app' }), '.'),
           el('li', {}, el('b', { text: 'iPhone or iPad: ' }),
             'in Safari, Share, then ', el('b', { text: 'Add to Home Screen' }), '.'))),
 
       section('Credits',
         el('p', {},
-          'Music and sound by ',
+          'Music by ',
           el('a', { class: 'info-link', href: SOUNDTRACK, target: '_blank', rel: 'noreferrer', text: 'aksfx' }),
           ', for ', el('em', { text: 'Big Walk' }), ' by ', el('b', { text: 'House House' }), '.'),
         el('p', { class: 'info-fine' },
