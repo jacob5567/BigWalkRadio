@@ -57,12 +57,11 @@ export class OfflineSection {
     this.el = el('section', { class: 'info-section' },
       el('h2', { text: 'Listening offline' }),
       el('p', {},
-        'The music streams from the server as it plays. Keep a copy on the device and the radio works'
-        + ' with no connection at all.'),
+        'The music streams from the server as it plays. Keep a copy on the device and the radio will'
+        + ' work completely offline!'),
       el('p', { class: 'off-warn' },
         el('b', { text: 'Install it to the home screen first. ' }),
-        'An installed app keeps its own storage, so a copy saved in the browser will not follow it'
-        + ' across. Then start this on wi-fi — it is a ',
+        'Then start this on wi-fi — it is a ',
         el('b', {}, formatBytes(store.totalBytes)), ' download.'),
       this.summary,
       this.action,

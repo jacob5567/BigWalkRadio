@@ -341,19 +341,6 @@ body.info-open { overflow: hidden; }
 .info-section p { margin: 0 0 8px; font-size: 14px; }
 .info-section p:last-child { margin-bottom: 0; }
 
-/* Control on the left, what it does on the right; stacked once that is tight. */
-.info-keys {
-  margin: 0; display: grid; grid-template-columns: 96px 1fr; gap: 8px 12px;
-  font-size: 14px;
-}
-.info-keys dt {
-  font: 500 11px/1.5 'DM Mono', ui-monospace, monospace; letter-spacing: .06em;
-  color: var(--display-ink);
-  background: var(--pill-bg); border-radius: 4px; padding: 4px 7px;
-  align-self: start; text-align: center;
-}
-.info-keys dd { margin: 0; align-self: center; }
-
 .info-steps { margin: 0; padding-left: 20px; font-size: 14px; }
 .info-steps li { margin-bottom: 6px; }
 .info-steps li:last-child { margin-bottom: 0; }
@@ -418,11 +405,6 @@ body.info-open { overflow: hidden; }
 }
 .info-done:active { transform: translateY(2px); }
 
-@media (max-width: 380px) {
-  .info-keys { grid-template-columns: 1fr; gap: 4px; }
-  .info-keys dt { justify-self: start; }
-  .info-keys dd { margin-bottom: 8px; }
-}
 
 @media (prefers-reduced-motion: reduce) {
   .unit *, .unit { transition: none !important; }

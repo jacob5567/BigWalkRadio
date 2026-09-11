@@ -98,14 +98,10 @@ describe('the info sheet', () => {
     expect(document.activeElement).toBe(last);
   });
 
-  it('says what the switches do, both clocks, and who wrote the music', () => {
+  it('says what both clocks mean, how to install it, and who wrote the music', () => {
     info.open();
     const text = document.querySelector('.info-sheet')!.textContent ?? '';
 
-    for (const control of ['Switch', 'Speaker', 'Wheel', 'Media keys']) {
-      expect(text).toContain(control);
-    }
-    expect(text).toContain('Back a channel, forward a channel');
     expect(text).toContain('REAL');
     expect(text).toContain('GAME');
     expect(text).toContain('Install app');

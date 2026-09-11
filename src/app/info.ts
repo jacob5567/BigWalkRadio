@@ -7,16 +7,6 @@ const KEY_SEEN = 'info-seen';
 
 const SOUNDTRACK = 'https://aksfx.bandcamp.com/';
 
-/** The face and the tray, in the order a hand finds them. */
-const CONTROLS: ReadonlyArray<readonly [string, string]> = [
-  ['Switch', 'Turns the radio on and off.'],
-  ['Speaker', 'A button. Press it to cycle through the channels and back to off.'],
-  ['‹  ›', 'Back a channel, forward a channel.'],
-  ['Wheel', 'Volume. Drag it, scroll it, or use the arrow keys.'],
-  ['REAL · GAME', 'Which clock the schedule runs on.'],
-  ['Media keys', 'Play and pause work the switch; the track buttons change channel.'],
-];
-
 /** Anything inside the sheet that can take focus, for the tab loop. */
 const FOCUSABLE = 'a[href], button';
 
@@ -24,14 +14,10 @@ function section(heading: string, ...body: Array<Node | string>): HTMLElement {
   return el('section', { class: 'info-section' }, el('h2', { text: heading }), ...body);
 }
 
-function control([name, what]: readonly [string, string]): HTMLElement[] {
-  return [el('dt', { text: name }), el('dd', { text: what })];
-}
-
 /**
- * The welcome sheet: what the knobs do, what the two clocks mean, how to keep
- * the thing on a home screen, and who wrote the music. Shown unasked on a first
- * visit, and after that only when the corner button is pressed.
+ * The welcome sheet: what the two clocks mean, how to keep the thing on a home
+ * screen, how to take the music offline, and who wrote it. Shown unasked on a
+ * first visit, and after that only when the corner button is pressed.
  */
 export class InfoPanel {
   /** The small button in the corner, which is also what closing returns to. */
@@ -66,21 +52,16 @@ export class InfoPanel {
       this.close,
       el('h1', { class: 'info-title', id: 'info-title', text: 'Big Walk Radio' }),
       el('p', { class: 'info-lede' },
-        'Seven channels of the ', el('em', { text: 'Big Walk' }), ' soundtrack, on a clock. Each station'
-        + ' plays the track that belongs to the time of day, looped, until the next fades in over it.'),
-
-      section('The controls',
-        el('dl', { class: 'info-keys' }, ...CONTROLS.flatMap(control))),
+        'The Radio from ', el('em', { text: 'Big Walk' }), ', now on your phone!'),
 
       section('REAL and GAME times',
         el('p', {},
           el('b', { text: 'REAL' }),
-          ' runs on your own clock: a 7:12am track goes on at 7:12am, so a channel can sit on one piece'
-          + ' for hours.'),
+          ' runs on your own clock: a 7:12am track goes on at 7:12am, and can run for hours.'),
         el('p', {},
           el('b', { text: 'GAME' }),
-          ' folds a whole broadcast day into 24 real minutes, as it runs in the game. The music still'
-          + ' plays at its own speed; only the schedule hurries.')),
+          ' collapses a whole day into 24 minutes, as it runs in the game, so you can rotate through'
+          + ' the whole soundtrack much more quickly.')),
 
       section('Installing it on a phone',
         el('p', { text: 'On the home screen it opens full screen, with its own icon.' }),
