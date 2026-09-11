@@ -88,7 +88,8 @@ class FakeBufferSource extends FakeNode {
 }
 
 export class FakeAudioContext {
-  state: 'running' | 'suspended' = 'running';
+  /** 'interrupted' is Safari's own, and what iOS does on the way to the home screen. */
+  state: 'running' | 'suspended' | 'interrupted' | 'closed' = 'running';
   currentTime = 0;
   sampleRate = 48000;
   destination = new FakeNode();

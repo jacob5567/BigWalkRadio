@@ -1,3 +1,4 @@
+import { claimPlaybackSession } from './audio-session';
 import { SoundBank, type SfxAction } from './sounds';
 import { riseAt, type TuneConfig } from './tuning';
 
@@ -92,6 +93,10 @@ export class AudioEngine {
 
   /** Must be called from a user gesture (iOS requires it). */
   async start(): Promise<void> {
+    // Before the context exists, so the very first one is created under the
+    // right category. iOS otherwise treats this as ambient sound and stops it
+    // the moment the app is backgrounded.
+    claimPlaybackSession();
     if (!this.ctx) {
       const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       this.ctx = new Ctor();
@@ -105,7 +110,7 @@ export class AudioEngine {
       this.tuning.connect(this.master);
     }
     // Resume first, while still inside the gesture that asked for it.
-    if (this.ctx.state === 'suspended') await this.ctx.resume();
+    await this.resume();
     this.running = true;
     // The switch and channel noises share the master gain, so the volume wheel
     // works them along with everything else. Already fetched, so this is quick.
@@ -138,6 +143,30 @@ export class AudioEngine {
       const x = i / RISE_STEPS;
       gain.linearRampToValueAtTime(riseAt(x), now + hold + fade * x);
     }
+  }
+
+  /**
+   * Brings the context back after the system took it away. iOS interrupts an
+   * AudioContext when the app is backgrounded, when a call arrives, or when
+   * another app claims the audio route; the context lands in 'suspended', or
+   * in Safari's own non-standard 'interrupted', and stays there until asked.
+   *
+   * Returns whether the context is running afterwards, so a caller that has to
+   * fall back on a user gesture knows it needs one.
+   */
+  async resume(): Promise<boolean> {
+    const ctx = this.ctx;
+    if (!ctx) return false;
+    if (ctx.state === 'running') return true;
+    if (ctx.state === 'closed') return false;
+    try {
+      await ctx.resume();
+    } catch {
+      // A resume outside a gesture can be refused. The next press gets it.
+      return false;
+    }
+    // Re-read rather than trust the narrowing: resume() is what changed it.
+    return (ctx.state as string) === 'running';
   }
 
   /** Collects the sound effects ahead of the first press. */

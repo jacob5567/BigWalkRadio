@@ -332,8 +332,19 @@ export class Radio {
     document.addEventListener('visibilitychange', this.onVisibilityChange);
   }
 
+  /**
+   * Coming back from the home screen. iOS will have interrupted the audio
+   * context on the way out and does not undo it on the way in, so the context
+   * is asked back before the schedule is, or the tick would place streams into
+   * a context that isn't running and the radio would sit there silent.
+   */
   private readonly onVisibilityChange = () => {
-    if (!document.hidden) this.tick();
+    if (document.hidden) return;
+    if (this.position === OFF) {
+      this.tick();
+      return;
+    }
+    void this.engine.resume().then(() => this.tick());
   };
 
   /** Stop ticking and release the audio hardware. */

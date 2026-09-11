@@ -200,6 +200,30 @@ is deliberately left alone, since a changed stylesheet is no reason to refetch
 145 MB. Sizes come from `src/core/presets.ts`, measured at generation time, so
 the total can be quoted before a single byte moves.
 
+## Playing in the background
+
+iOS decides what a page's audio *is* before it decides whether to keep playing
+it. The default category is `auto`, which behaves like ambient sound: the
+ring/silent switch mutes it, and the system stops it when the app goes to the
+home screen. The app claims `navigator.audioSession.type = 'playback'` before
+building its audio context, which is the category for an app whose whole point
+is playing audio. It is WebKit-only and a no-op everywhere else.
+
+Coming back to the foreground, the context is resumed before the scheduler
+ticks. iOS parks it in `suspended`, or in Safari's own non-standard
+`interrupted`, and does not undo that on the way in — so without the resume the
+radio returns to a dead context and silently places streams into it.
+
+One caveat worth knowing if background audio still misbehaves on an iPhone.
+Every station is routed through a `MediaElementAudioSourceNode` into a Web
+Audio graph, because that is what gives the crossfades at the seams, the switch
+envelope and the volume wheel. A plain `<audio>` element is the thing iOS
+keeps alive most reliably in the background; a Web Audio graph is more likely
+to be interrupted whatever its category. Moving the music off Web Audio would
+trade that for the seams and, on iOS specifically, the volume wheel — iPhone
+Safari ignores `HTMLMediaElement.volume`, leaving the hardware buttons as the
+only control. That trade has not been made.
+
 ## The controls
 
 The unit is a single screen. A lamp and a power switch sit to the left of the
